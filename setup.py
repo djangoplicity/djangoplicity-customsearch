@@ -39,7 +39,7 @@ from setuptools import setup, find_packages
 
 setup(
 	name = 'djangoplicity-customsearch',
-	version = '0.1.0',
+	version = '0.1',
 	packages = find_packages('src'),
 	package_dir = { '': 'src' },
 	include_package_data = True,
@@ -54,8 +54,8 @@ setup(
 	# metadata for upload to PyPI
 	author = 'European Southern Observatory',
 	author_email = 'information@eso.org',
-	description = 'Djangoplicity application for ...',
+	description = 'Djangoplicity application for making custom searches in other models.',
 	license = "New BSD License",
-	keywords = "django djangoplicity ",
+	keywords = "django djangoplicity search",
 	url = "http://www.djangoplicity.org"
 )
