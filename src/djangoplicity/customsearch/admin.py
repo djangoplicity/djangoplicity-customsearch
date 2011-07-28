@@ -38,7 +38,7 @@ from djangoplicity.admincomments.admin import AdminCommentInline, \
 	AdminCommentMixin
 from djangoplicity.customsearch.models import CustomSearch, \
 	CustomSearchCondition, CustomSearchField, CustomSearchModel, CustomSearchGroup, \
-	CustomSearchLayout, CustomSearchLayoutField
+	CustomSearchLayout, CustomSearchLayoutField, CustomSearchOrdering
 
 class CustomSearchFieldInlineAdmin( admin.TabularInline ):
 	model = CustomSearchField
@@ -48,6 +48,10 @@ class CustomSearchFieldInlineAdmin( admin.TabularInline ):
 class CustomSearchConditionInlineAdmin( admin.TabularInline ):
 	model = CustomSearchCondition
 	extra = 3
+	
+class CustomSearchOrderingInlineAdmin( admin.TabularInline ):
+	model = CustomSearchOrdering
+	extra = 1
 	
 class CustomSearchLayoutFieldInlineAdmin( admin.TabularInline ):
 	model = CustomSearchLayoutField
@@ -73,10 +77,19 @@ class CustomSearchGroupAdmin( admin.ModelAdmin ):
 	search_fields = ['name', ]
 
 class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
-	list_display = ['name', 'model', 'group' ]
+	list_display = ['name', 'model', 'group', ]
 	list_filter = ['model', 'group' ]
 	search_fields = ['name', 'model__name' ]
-	inlines = [ CustomSearchConditionInlineAdmin, AdminCommentInline ]
+	fieldsets = ( 
+		( None, {
+			'fields': ( 'name', 'model', 'layout', 'group', )
+		} ),
+		( 'Description', {
+			'fields': ( 'human_readable_text', )
+		} ),
+	)
+	inlines = [ CustomSearchConditionInlineAdmin, CustomSearchOrderingInlineAdmin, AdminCommentInline ]
+	readonly_fields = ['human_readable_text']
 
 
 def register_with_admin( admin_site ):

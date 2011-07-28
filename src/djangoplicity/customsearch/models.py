@@ -37,26 +37,26 @@ from django.contrib.contenttypes.models import ContentType
 import operator
 from django.core.exceptions import ValidationError
 
-MATCH_TYPE = (
-	('__exact','Exact'),
-	('__contains','Contains'),
-	('__startswith','Starts with'),
-	('__endswith','Ends with'),
-	('__regex','Regular expression'),
-	('__iexact','Exact (case-insensitive)'),
-	('__icontains','Contains (case-insensitive)'),
-	('__istartswith','Starts with (case-insensitive)'),
-	('__iendswith','Ends with (case-insensitive)'),
-	('__iregex','Regular expression (case-insensitive)'),
-)
+MATCH_TYPE = ( 
+	( '__exact', 'Exact' ),
+	( '__contains', 'Contains' ),
+	( '__startswith', 'Starts with' ),
+	( '__endswith', 'Ends with' ),
+	( '__regex', 'Regular expression' ),
+	( '__iexact', 'Exact (case-insensitive)' ),
+	( '__icontains', 'Contains (case-insensitive)' ),
+	( '__istartswith', 'Starts with (case-insensitive)' ),
+	( '__iendswith', 'Ends with (case-insensitive)' ),
+	( '__iregex', 'Regular expression (case-insensitive)' ),
+ )
 
 class CustomSearchGroup( models.Model ):
 	"""
 	Groups for custom searches
 	"""
 	name = models.CharField( max_length=255, blank=True )
-	
-	def __unicode__(self):
+
+	def __unicode__( self ):
 		return self.name
 
 class CustomSearchModel( models.Model ):
@@ -65,11 +65,11 @@ class CustomSearchModel( models.Model ):
 	"""
 	name = models.CharField( max_length=255 )
 	model = models.ForeignKey( ContentType )
-	
+
 	def __unicode__( self ):
 		return self.name
 
-	
+
 class CustomSearchField( models.Model ):
 	"""
 	Define a field for a custom search model	
@@ -78,17 +78,17 @@ class CustomSearchField( models.Model ):
 	name = models.CharField( max_length=255 )
 	field_name = models.SlugField()
 	selector = models.SlugField( blank=True )
-	
+
 	def full_field_name( self ):
 		return "%s%s" % ( self.field_name, self.selector )
 
-	
-	def clean(self):
+
+	def clean( self ):
 		if self.selector != "" and not self.selector.startswith( "__" ):
 			raise ValidationError( "Selector must start with two underscores" )
-	
+
 	def __unicode__( self ):
-		return "%s: %s" % ( self.model.name, self.name,  )
+		return "%s: %s" % ( self.model.name, self.name, )
 
 
 class CustomSearchLayout( models.Model ):
@@ -97,7 +97,7 @@ class CustomSearchLayout( models.Model ):
 	model = models.ForeignKey( CustomSearchModel )
 	name = models.CharField( max_length=255 )
 	fields = models.ManyToManyField( CustomSearchField, through='CustomSearchLayoutField' )
-	
+
 	def header( self ):
 		"""
 		"""
@@ -105,13 +105,13 @@ class CustomSearchLayout( models.Model ):
 		for f in self.fields.all():
 			header += self._get_header_value( f )
 		return header
-	
+
 
 	def rows( self, query_set ):
 		"""
 		"""
 		data = []
-		
+
 		for obj in query_set:
 			row = []
 			for f in self.fields.all():
@@ -119,18 +119,18 @@ class CustomSearchLayout( models.Model ):
 			data.append( row )
 
 		return data
-	
+
 	def _get_field_value( self, obj, field ):
 		modelcls = self.model.model.model_class()
 		( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
-		
+
 		if not m2m:
 			return [getattr( obj, field.fiel_name )]
 		else:
 			return ["; ".join( getattr( obj, field.fiel_name ).all() ) ]
 
-	
-	def _get_header_value(self, field ):
+
+	def _get_header_value( self, field ):
 		return [( field.name, field.field_name )]
 #		modelcls = self.model.model.model_class()
 #		
@@ -146,7 +146,7 @@ class CustomSearchLayout( models.Model ):
 #					
 #				return cols				
 #		return []
-	
+
 	def __unicode__( self ):
 		return "%s: %s" % ( self.model.name, self.name, )
 
@@ -155,13 +155,13 @@ class CustomSearchLayoutField( models.Model ):
 	layout = models.ForeignKey( CustomSearchLayout )
 	field = models.ForeignKey( CustomSearchField )
 	position = models.PositiveIntegerField( null=True, blank=True )
-	
+
 	def clean( self ):
 		if self.layout.model != self.field.model:
 			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.layout.model.name ) )
 
 
-	
+
 class CustomSearch( models.Model ):
 	"""
 	Model for defining a custom search on the contact model
@@ -170,13 +170,55 @@ class CustomSearch( models.Model ):
 	model = models.ForeignKey( CustomSearchModel )
 	group = models.ForeignKey( CustomSearchGroup, blank=True, null=True )
 	layout = models.ForeignKey( CustomSearchLayout )
-	
+
 	class Meta:
 		verbose_name_plural = 'custom searches'
 		permissions = [
 			( "can_view", "Can view all custom searches" ),
 		]
+
+	def human_readable_text( self ):
+		"""
+		Make a human readable text describing this search.
+		"""
+		text = []
+		include,exclude = self._collect_search_conds()
+		match_types = dict( MATCH_TYPE )
 		
+		for conditions,title in [( include, 'Include' ), ( exclude, 'Exclude' )]:
+			field_texts = [] 
+			for field, values in conditions.items():
+				field_title = self.model.model.model_class()._meta.get_field_by_name( field )[0].verbose_name.lower()
+				
+				# Group values for each match type
+				field_match = {}
+				for val,match in values:
+					if match not in field_match:
+						field_match[match] = []
+					field_match[match].append(val)
+
+				match_texts = []				
+				for match, values in field_match.items():
+					if match == '__exact':
+						match_title = "matches"
+					elif match == '__iexact':
+						match_title = "matches (case-insensitive)"
+					elif match == '__regex':
+						match_title = "matches regular expression"
+					elif match == '__iregex':
+						match_title = "matches regular expression (case-insensitive)" 
+					else:
+						match_title = match_types[match].lower()
+					match_texts.append( "%s %s" % ( match_title, " or ".join( ['"%s"' % x for x in values] ) ) )
+				field_texts.append( "%s %s" % ( field_title, " or ".join( match_texts ) ) )
+			
+
+			if field_texts:
+				text.append("%s %s where %s." % ( title, self.model.model.model_class()._meta.verbose_name_plural.lower(), " and, ".join( field_texts ) ))
+		return " ".join( text ) if text else "Include all %s." % self.model.model.model_class()._meta.verbose_name_plural.lower()		
+					
+
+
 	def clean( self ):
 		"""
 		Ensure the layout model matches the search model.
@@ -184,14 +226,11 @@ class CustomSearch( models.Model ):
 		if self.model != self.layout.model:
 			raise ValidationError( 'Layout %s does not belong to %s' % ( self.layout, self.model.name ) )
 
-	def get_query_set(self):
-		"""
-		Execute the custom search
-		"""
+
+	def _collect_search_conds( self ):
 		include = {}
 		exclude = {}
-		
-		# Collect all search conditions
+
 		for c in self.customsearchcondition_set.filter( field__model=self.model ):
 			tmp = exclude if c.exclude else include
 
@@ -199,26 +238,35 @@ class CustomSearch( models.Model ):
 				tmp[c.field.field_name] = []
 			tmp[c.field.field_name].append( ( c.value, c.match ) )
 
+		return ( include, exclude )
+
+	def get_query_set( self ):
+		"""
+		Execute the custom search
+		"""
+		# Collect all search conditions
+		include, exclude = self._collect_search_conds()
+
 		# Create Q objects for all conditions
 		include_queries = []
 		exclude_queries = []
-		
-		for field,values in include.items():
-			include_queries.append( reduce( operator.or_, [models.Q( **{ "%s%s" % (field,match) : val } ) for (val,match) in values] )  )
-			
-		for field,values in exclude.items():
-			exclude_queries.append( reduce( operator.or_, [models.Q( **{ "%s%s" % (field,match) : val } ) for (val,match) in values] )  )
-				
+
+		for field, values in include.items():
+			include_queries.append( reduce( operator.or_, [models.Q( **{ "%s%s" % ( field, match ) : val } ) for ( val, match ) in values] ) )
+
+		for field, values in exclude.items():
+			exclude_queries.append( reduce( operator.or_, [models.Q( **{ "%s%s" % ( field, match ) : val } ) for ( val, match ) in values] ) )
+
 		include_queries = reduce( operator.and_, include_queries ) if len( include_queries ) > 1 else include_queries
 		exclude_queries = reduce( operator.and_, exclude_queries ) if len( exclude_queries ) > 1 else None
-		
+
 		# Generate queryset for search.
 		qs = self.model.model_class().objects.all()
 		if include_queries:
 			qs = qs.filter( include_queries )
 		if exclude_queries:
 			qs = qs.exclude( exclude_queries )
-		
+
 		return qs
 
 class CustomSearchCondition( models.Model ):
@@ -234,15 +282,32 @@ class CustomSearchCondition( models.Model ):
 	field = models.ForeignKey( CustomSearchField )
 	match = models.CharField( max_length=30, choices=MATCH_TYPE )
 	value = models.CharField( max_length=255, blank=True )
-	
+
 	def clean( self ):
 		"""
 		Ensure the field model matches the search model.
 		"""
 		from django.core.exceptions import ValidationError
-		
-		if self.field.model != self.search.model:
-			raise ValidationError( 'Field %s does not belong to %s' % (self.field, self.search.model.name) )
 
-	
+		if self.field.model != self.search.model:
+			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.search.model.name ) )
+		
+
+class CustomSearchOrdering( models.Model ):
+	"""
+	Allow ordering of fields
+	"""
+	search = models.ForeignKey( CustomSearch )
+	field = models.ForeignKey( CustomSearchField )
+
+	def clean( self ):
+		"""
+		Ensure the field model matches the search model.
+		"""
+		from django.core.exceptions import ValidationError
+
+		if self.field.model != self.search.model:
+			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.search.model.name ) )
+
+
 
