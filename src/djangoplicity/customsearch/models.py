@@ -173,9 +173,9 @@ class CustomSearch( models.Model ):
 	
 	class Meta:
 		verbose_name_plural = 'custom searches'
-		permissions = (
-			( "can_view", "Can view all custom searches" )
-		)
+		permissions = [
+			( "can_view", "Can view all custom searches" ),
+		]
 		
 	def clean( self ):
 		"""
