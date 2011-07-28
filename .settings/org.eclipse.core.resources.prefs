@@ -1,9 +1,10 @@
-#Mon Jul 25 11:50:21 CEST 2011
+#Thu Jul 28 11:09:08 CEST 2011
 eclipse.preferences.version=1
 encoding//src/djangoplicity.customsearch/__init__.py=utf-8
 encoding//src/djangoplicity/customsearch/__init__.py=utf-8
 encoding//src/djangoplicity/customsearch/actions.py=utf-8
 encoding//src/djangoplicity/customsearch/admin.py=utf-8
+encoding//src/djangoplicity/customsearch/migrations/0001_initial.py=utf-8
 encoding//src/djangoplicity/customsearch/models.py=utf-8
 encoding//src/djangoplicity/customsearch/tests.py=utf-8
 encoding//src/djangoplicity/customsearch/urls.py=utf-8
