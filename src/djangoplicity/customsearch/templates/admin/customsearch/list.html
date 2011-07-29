@@ -17,24 +17,36 @@
 
 {% block bodyclass %}change-list{% endblock %}
 
-  {% block breadcrumbs %}
-    <div class="breadcrumbs">
-      <a href="../../">
-        {% trans "Home" %}
-      </a>
-      &rsaquo; 
-      History
-    </div>
-  {% endblock %}
+{% block breadcrumbs %}{% with search as original %}
+<div class="breadcrumbs">
+     <a href="../../../../">{% trans "Home" %}</a> &rsaquo;
+     <a href="../../../">{{ app_label|capfirst|escape }}</a> &rsaquo;
+     <a href="../../">{{ opts.verbose_name_plural|capfirst }}</a> &rsaquo;
+     <a href="../">{{ original|truncatewords:"18" }}</a> &rsaquo;
+     {% trans "Results" %}
+</div>
+{% endwith %}
+{% endblock %}
+
 
 {% block coltype %}flex{% endblock %}
 {% block site_title %}TEST{% endblock %}
 
 {% block content %}
- <h1>Custom Search</h1>
-  <div id="content-main">
+ <h1>Custom Search: {{ search.name }}</h1>
+<p><strong>Description:</strong> {{search.human_readable_text}}</p>
+
+<div id="content-main">
     {% block object-tools %}
+        <ul class="object-tools">
+          {% block object-tools-items %}
+            <li>
+              <a href="../export/" class="historylink">Export</a>
+            </li>
+          {% endblock %}
+        </ul>
     {% endblock %}
+
     <div class="module{% if filtered %} filtered{% endif %}" id="changelist">
       {% block search %}
 		<div id="toolbar"><form id="changelist-search" action="" method="get">
@@ -54,25 +66,17 @@
 			<table cellspacing="0" id="result_list">
 			<thead>
 			<tr>
-			<th>User</th>
-			<th>Timestamp</th>
-			<th>Action</th>
-			<th>Type</th>
-			<th>ID</th>
-			<th>Object</th>
-			<th>Action description</th>
+			{% for name,field_name in search.layout.header %}
+			<th>{{name}}</th>
+			{% endfor %}
 			</tr>
 			</thead>
 			<tbody>
-			{% for object in objects.object_list %}
+			{% for row in data_table %}
 			<tr class="{% cycle 'row1' 'row2' %}">
-			<td><a href="{{querystring}}u={{ object.user.pk}}">{{ object.user}}</a></td>
-			<td>{{ object.action_time }}</td>
-			<td align="center"><a href="{{querystring}}a={{ object.action_flag }}" class="{% if object.is_addition %}addlink{% endif %}{% if object.is_change %}changelink{% endif %}{% if object.is_deletion %}deletelink{% endif %}"></a></td>
-			<td><a href="{{querystring}}ct={{object.content_type.pk}}">{{ object.content_type }}</a></td>
-			<td><a href="{{querystring}}id={{object.object_id}}">{{object.object_id}}</a></td>
-			<td>{% if not object.is_deletion %} (<a href="../{{ object.get_admin_url }}">edit</a>){% endif %} {{ object.object_repr|escape }}</td>
-			<td>{{ object.change_message }}</td>
+			{% for value in row.values %}
+			<td>{{value}}</td>
+			{% endfor %}
 			</tr>
 			{% endfor %}
 			</tbody>

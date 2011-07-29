@@ -30,9 +30,14 @@
 # POSSIBILITY OF SUCH DAMAGE
 #
 
-
 from django import forms
+from django.conf.urls.defaults import patterns
 from django.contrib import admin
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404, render_to_response
+from django.template import RequestContext
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from djangoplicity.admincomments.admin import AdminCommentInline, \
 	AdminCommentMixin
@@ -77,7 +82,7 @@ class CustomSearchGroupAdmin( admin.ModelAdmin ):
 	search_fields = ['name', ]
 
 class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
-	list_display = ['name', 'model', 'group', ]
+	list_display = ['name', 'model', 'group', 'admin_results_url', 'admin_export_url' ]
 	list_filter = ['model', 'group' ]
 	search_fields = ['name', 'model__name' ]
 	fieldsets = ( 
@@ -90,6 +95,67 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 	)
 	inlines = [ CustomSearchConditionInlineAdmin, CustomSearchOrderingInlineAdmin, AdminCommentInline ]
 	readonly_fields = ['human_readable_text']
+	
+	def admin_results_url( self, obj ):
+		return mark_safe( """<a href="%s/search/">Results</a>""" % obj.pk )
+	admin_results_url.short_description = "Results"
+	admin_results_url.allow_tags = True
+	
+	def admin_export_url( self, obj ):
+		return mark_safe( """<a href="%s/export/">Export</a>""" % obj.pk )
+	admin_export_url.short_description = "Export"
+	admin_export_url.allow_tags = True
+	
+	def get_urls( self ):
+		urls = super( CustomSearchAdmin, self ).get_urls()
+		extra_urls = patterns( '',
+			( r'^(?P<pk>[0-9]+)/search/$', self.admin_site.admin_view( self.search_view ) ),
+			( r'^(?P<pk>[0-9]+)/export/$', self.admin_site.admin_view( self.export_view ) ),
+		)
+		return extra_urls + urls
+	
+	def export_view( self, request, pk=None ):
+		return HttpResponse("Not yet supported.")
+
+	def search_view( self, request, pk=None ):
+		"""
+		Perform search
+		"""
+		search = get_object_or_404( CustomSearch, pk=pk )
+		
+		# Search
+		searchval = request.GET.get( "s", None )
+		
+		# Get page num
+		try:
+			page = int( request.GET.get( 'p', '1' ) )
+		except ValueError:
+			page = 1
+
+		paginator = Paginator( search.get_query_set( freetext=searchval ), 100 )
+		
+		# Adapt page to list
+		try:
+			objects = paginator.page( page )
+		except ( EmptyPage, InvalidPage ):
+			objects = paginator.page( paginator.num_pages )
+			
+		return render_to_response( 
+			"admin/customsearch/list.html", 
+			{
+				'search' : search,
+				'objects' : objects,
+				'data_table' : search.layout.data_table( objects.object_list ), 
+				'messages': [],
+				'app_label' : search._meta.app_label,
+				'opts' : search._meta,
+				'searchval' : searchval,
+				
+			}, 
+			context_instance=RequestContext( request ) 
+		)
+
+		
 
 
 def register_with_admin( admin_site ):

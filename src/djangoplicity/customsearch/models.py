@@ -81,7 +81,9 @@ class CustomSearchField( models.Model ):
 
 	def full_field_name( self ):
 		return "%s%s" % ( self.field_name, self.selector )
-
+	
+	def get_modelclass_field( self ):
+		return self.model.model.model_class()._meta.get_field_by_name( self.field_name )
 
 	def clean( self ):
 		if self.selector != "" and not self.selector.startswith( "__" ):
@@ -102,50 +104,60 @@ class CustomSearchLayout( models.Model ):
 		"""
 		"""
 		header = []
-		for f in self.fields.all():
-			header += self._get_header_value( f )
+		for f in CustomSearchLayoutField.objects.filter( layout=self ).select_related():
+			header += self._get_header_value( f.field, expand=f.expand_rel )
 		return header
 
-
-	def rows( self, query_set ):
+	def data_table( self, query_set ):
 		"""
 		"""
 		data = []
 
 		for obj in query_set:
 			row = []
-			for f in self.fields.all():
-				row += self._get_field_value( obj, f )
-			data.append( row )
-
+			for f in CustomSearchLayoutField.objects.filter( layout=self ).select_related():
+				row += self._get_field_value( obj, f.field, expand=f.expand_rel )
+			data.append( { 'object' : obj, 'values' : row } )
+		
 		return data
 
-	def _get_field_value( self, obj, field ):
+	def _get_field_value( self, obj, field, expand=False ):
 		modelcls = self.model.model.model_class()
 		( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
 
-		if not m2m:
-			return [getattr( obj, field.fiel_name )]
+		if m2m and expand:
+			if direct:
+				rels = getattr( obj, field.field_name ).all()
+				
+				cols = []
+				for v in field_object.related.parent_model.objects.all():
+					if v in rels:
+						cols.append( "X" )
+					else:
+						cols.append( "" )
+				return cols
+		elif m2m and not expand:
+			return ["; ".join( [unicode(x) for x in getattr( obj, field.field_name ).all()] ) ]
 		else:
-			return ["; ".join( getattr( obj, field.fiel_name ).all() ) ]
+			return [getattr( obj, field.field_name )]
+			
 
 
-	def _get_header_value( self, field ):
-		return [( field.name, field.field_name )]
-#		modelcls = self.model.model.model_class()
-#		
-#		( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
-#		
-#		if not m2m:
-#			return [( field.name, field.field_name )]
-#		else:
-#			if direct:
-#				cols = []
-#				for v in field_object.related.parent_model.objects.all():
-#					cols.append( ( "%s: %s" % ( field.name, unicode( v ) ) , "%s:%s" % ( field.field_name, v.pk ) ) )
-#					
-#				return cols				
-#		return []
+	def _get_header_value( self, field, expand=False ):
+		modelcls = self.model.model.model_class()
+		( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
+			
+		if m2m and expand:
+			if direct:
+				cols = []
+				for v in field_object.related.parent_model.objects.all():
+					cols.append( ( "%s: %s" % ( field.name, unicode( v ) ) , "%s:%s" % ( field.field_name, v.pk ) ) )
+				return cols
+		else:
+			return [( field.name, field.field_name )]
+		
+		
+	
 
 	def __unicode__( self ):
 		return "%s: %s" % ( self.model.name, self.name, )
@@ -155,6 +167,7 @@ class CustomSearchLayoutField( models.Model ):
 	layout = models.ForeignKey( CustomSearchLayout )
 	field = models.ForeignKey( CustomSearchField )
 	position = models.PositiveIntegerField( null=True, blank=True )
+	expand_rel = models.BooleanField( default=False )
 
 	def clean( self ):
 		if self.layout.model != self.field.model:
@@ -176,6 +189,10 @@ class CustomSearch( models.Model ):
 		permissions = [
 			( "can_view", "Can view all custom searches" ),
 		]
+		
+	def __unicode__( self ):
+		return self.name
+
 
 	def human_readable_text( self ):
 		"""
@@ -215,6 +232,11 @@ class CustomSearch( models.Model ):
 
 			if field_texts:
 				text.append("%s %s where %s." % ( title, self.model.model.model_class()._meta.verbose_name_plural.lower(), " and, ".join( field_texts ) ))
+				
+		ordering = self.customsearchordering_set.all()
+		if len(ordering) > 0:
+			text.append("Order result by %s" % ", ".join( [o.field.name for o in ordering] ) )
+		
 		return " ".join( text ) if text else "Include all %s." % self.model.model.model_class()._meta.verbose_name_plural.lower()		
 					
 
@@ -240,7 +262,7 @@ class CustomSearch( models.Model ):
 
 		return ( include, exclude )
 
-	def get_query_set( self ):
+	def get_query_set( self, freetext=None ):
 		"""
 		Execute the custom search
 		"""
@@ -257,17 +279,39 @@ class CustomSearch( models.Model ):
 		for field, values in exclude.items():
 			exclude_queries.append( reduce( operator.or_, [models.Q( **{ "%s%s" % ( field, match ) : val } ) for ( val, match ) in values] ) )
 
-		include_queries = reduce( operator.and_, include_queries ) if len( include_queries ) > 1 else include_queries
-		exclude_queries = reduce( operator.and_, exclude_queries ) if len( exclude_queries ) > 1 else None
+		include_queries = reduce( operator.and_, include_queries ) if len( include_queries ) > 0 else None
+		exclude_queries = reduce( operator.and_, exclude_queries ) if len( exclude_queries ) > 0 else None
 
 		# Generate queryset for search.
-		qs = self.model.model_class().objects.all()
+		modelclass = self.model.model.model_class()
+		qs = modelclass.objects.all()
 		if include_queries:
 			qs = qs.filter( include_queries )
 		if exclude_queries:
 			qs = qs.exclude( exclude_queries )
+		
+		
+		# Free text search in result set
+		if freetext:
+			qobjects = []
+			for f in CustomSearchField.objects.filter( model=self.model ):
+				arg = "%s__icontains" % f.full_field_name()
+				qobjects.append( models.Q( **{ arg : freetext } ) )
+			qs = qs.filter( reduce( operator.or_, qobjects ) )			
+			
+		# Ordergin
+		ordering = self.customsearchordering_set.all()
+		if len(ordering) > 0:
+			qs.order_by( *["%s%s" % ( "-" if o.descending else "", o.field.full_field_name() ) for o in ordering] )
+			
+		
 
 		return qs
+	
+	def get_data_table( self ):
+		return self.layout.rows( self.get_query_set() )
+
+
 
 class CustomSearchCondition( models.Model ):
 	"""
@@ -299,6 +343,7 @@ class CustomSearchOrdering( models.Model ):
 	"""
 	search = models.ForeignKey( CustomSearch )
 	field = models.ForeignKey( CustomSearchField )
+	descending = models.BooleanField( default=False )
 
 	def clean( self ):
 		"""
