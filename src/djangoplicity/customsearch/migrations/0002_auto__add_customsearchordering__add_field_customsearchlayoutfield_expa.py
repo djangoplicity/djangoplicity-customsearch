@@ -8,12 +8,6 @@ class Migration(SchemaMigration):
 
 	def forwards(self, orm):
 		
-		try:
-			db.delete_table('customsearch_customsearchordering')
-		except Exception:
-			pass
-		
-		
 		# Adding model 'CustomSearchOrdering'
 		db.create_table('customsearch_customsearchordering', (
 			('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
