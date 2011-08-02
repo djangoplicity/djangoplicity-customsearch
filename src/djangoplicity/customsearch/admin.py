@@ -33,10 +33,12 @@
 from django import forms
 from django.conf.urls.defaults import patterns
 from django.contrib import admin
+from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
+from django.template.defaultfilters import slugify
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from djangoplicity.admincomments.admin import AdminCommentInline, \
@@ -44,6 +46,12 @@ from djangoplicity.admincomments.admin import AdminCommentInline, \
 from djangoplicity.customsearch.models import CustomSearch, \
 	CustomSearchCondition, CustomSearchField, CustomSearchModel, CustomSearchGroup, \
 	CustomSearchLayout, CustomSearchLayoutField, CustomSearchOrdering
+
+try:
+	from djangoplicity.contacts.models import Label
+	has_labels = True
+except ImportError:
+	has_labels = False
 
 class CustomSearchFieldInlineAdmin( admin.TabularInline ):
 	model = CustomSearchField
@@ -82,7 +90,7 @@ class CustomSearchGroupAdmin( admin.ModelAdmin ):
 	search_fields = ['name', ]
 
 class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
-	list_display = ['name', 'model', 'group', 'admin_results_url', 'admin_export_url' ]
+	list_display = ['name', 'model', 'group', 'admin_results_url', 'admin_export_url', 'admin_labels_url' ]
 	list_filter = ['model', 'group' ]
 	search_fields = ['name', 'model__name' ]
 	fieldsets = ( 
@@ -106,33 +114,85 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 	admin_export_url.short_description = "Export"
 	admin_export_url.allow_tags = True
 	
+	def admin_labels_url( self, obj ):
+		return mark_safe( """<a href="%s/labels/">Labels</a>""" % obj.pk )
+	admin_labels_url.short_description = "Labels"
+	admin_labels_url.allow_tags = True
+	
 	def get_urls( self ):
 		urls = super( CustomSearchAdmin, self ).get_urls()
 		extra_urls = patterns( '',
 			( r'^(?P<pk>[0-9]+)/search/$', self.admin_site.admin_view( self.search_view ) ),
 			( r'^(?P<pk>[0-9]+)/export/$', self.admin_site.admin_view( self.export_view ) ),
+			( r'^(?P<pk>[0-9]+)/labels/$', self.admin_site.admin_view( self.labels_view ) ),
 		)
 		return extra_urls + urls
 	
-	def export_view( self, request, pk=None ):
-		return HttpResponse("Not yet supported.")
+	def get_results_query_set( self, request, pk ):
+		"""
+		Get the queryset for the selected custom search.
+		"""
+		search = get_object_or_404( CustomSearch, pk=pk )
 
+		# Search
+		searchval = request.GET.get( "s", None )
+		qs = search.get_query_set( freetext=searchval )
+		
+		return ( search, qs, searchval )
+
+	
+	def export_view( self, request, pk=None ):
+		( search, qs, searchval ) = self.get_results_query_set( request, pk )
+		return HttpResponse( "Not yet supported." )
+
+
+	def labels_view( self, request, pk=None ):
+		"""
+		Generate labels or show list of available labels
+		"""
+		if not has_labels:
+			return HttpResponse("Labels generation support not available.")
+		
+		# Get queryset
+		( search, qs, searchval ) = self.get_results_query_set( request, pk )
+
+		# Get label 
+		try:
+			label = Label.objects.get( pk=request.GET.get( 'label', None ), enabled=True )
+			return label.get_label_render().render_http_response( qs, 'labels_%s.pdf' % slugify( search.name ) )
+		except Label.DoesNotExist:
+			# No label, so display list of available labels
+			labels = Label.objects.filter( enabled=True ).order_by( 'name' )
+			
+			return render_to_response(
+				"admin/customsearch/labels.html", 
+				{
+					'search' : search,
+					'labels' : labels,
+					'object_count' : qs.count(),
+					'messages': [],
+					'app_label' : search._meta.app_label,
+					'opts' : search._meta,
+					'searchval' : searchval if searchval is not None else "",
+					'has_labels' : has_labels,
+				}, 
+				context_instance=RequestContext( request )
+			)
+
+	#@permission_required( 'customsearch.can_view' )
 	def search_view( self, request, pk=None ):
 		"""
 		Perform search
 		"""
-		search = get_object_or_404( CustomSearch, pk=pk )
-		
-		# Search
-		searchval = request.GET.get( "s", None )
-		
+		( search, qs, searchval ) = self.get_results_query_set( request, pk )
+
 		# Get page num
 		try:
 			page = int( request.GET.get( 'p', '1' ) )
 		except ValueError:
 			page = 1
 
-		paginator = Paginator( search.get_query_set( freetext=searchval ), 100 )
+		paginator = Paginator( qs, 100 )
 		
 		# Adapt page to list
 		try:
@@ -149,8 +209,8 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 				'messages': [],
 				'app_label' : search._meta.app_label,
 				'opts' : search._meta,
-				'searchval' : searchval,
-				
+				'searchval' : searchval if searchval is not None else "",
+				'has_labels' : has_labels,
 			}, 
 			context_instance=RequestContext( request ) 
 		)

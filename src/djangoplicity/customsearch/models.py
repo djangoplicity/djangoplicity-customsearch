@@ -36,6 +36,7 @@ from django.utils.translation import ugettext as _
 from django.contrib.contenttypes.models import ContentType
 import operator
 from django.core.exceptions import ValidationError
+from django.db.models.related import RelatedObject
 
 MATCH_TYPE = ( 
 	( '__exact', 'Exact' ),
@@ -78,6 +79,8 @@ class CustomSearchField( models.Model ):
 	name = models.CharField( max_length=255 )
 	field_name = models.SlugField()
 	selector = models.SlugField( blank=True )
+	enable_layout = models.BooleanField( default=True )
+	enable_search = models.BooleanField( default=True ) 
 
 	def full_field_name( self ):
 		return "%s%s" % ( self.field_name, self.selector )
@@ -124,22 +127,27 @@ class CustomSearchLayout( models.Model ):
 	def _get_field_value( self, obj, field, expand=False ):
 		modelcls = self.model.model.model_class()
 		( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
-
+		
+		# Get accessor value
+		accessor = field.field_name
+		if isinstance( field_object, RelatedObject ):
+			m2m = True
+			accessor = field_object.get_accessor_name()
+		
 		if m2m and expand:
-			if direct:
-				rels = getattr( obj, field.field_name ).all()
+			rels = getattr( obj, accessor ).all()
 				
-				cols = []
-				for v in field_object.related.parent_model.objects.all():
-					if v in rels:
-						cols.append( "X" )
-					else:
-						cols.append( "" )
-				return cols
+			cols = []
+			for v in field_object.related.parent_model.objects.all():
+				if v in rels:
+					cols.append( "X" )
+				else:
+					cols.append( "" )
+			return cols
 		elif m2m and not expand:
-			return ["; ".join( [unicode(x) for x in getattr( obj, field.field_name ).all()] ) ]
+			return ['"%s"' % "\";\"".join( [unicode( x ).replace( '"', '""' ) for x in getattr( obj, accessor ).all()] ) ]
 		else:
-			return [getattr( obj, field.field_name )]
+			return [getattr( obj, accessor )]
 			
 
 
@@ -165,13 +173,15 @@ class CustomSearchLayout( models.Model ):
 
 class CustomSearchLayoutField( models.Model ):
 	layout = models.ForeignKey( CustomSearchLayout )
-	field = models.ForeignKey( CustomSearchField )
+	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_layout' : True } )
 	position = models.PositiveIntegerField( null=True, blank=True )
 	expand_rel = models.BooleanField( default=False )
 
 	def clean( self ):
 		if self.layout.model != self.field.model:
 			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.layout.model.name ) )
+		if not self.field.enable_layout:
+			raise ValidationError( 'Field %s does not allow use in layout' % self.field )
 
 
 
@@ -205,11 +215,11 @@ class CustomSearch( models.Model ):
 		for conditions,title in [( include, 'Include' ), ( exclude, 'Exclude' )]:
 			field_texts = [] 
 			for field, values in conditions.items():
-				field_title = self.model.model.model_class()._meta.get_field_by_name( field )[0].verbose_name.lower()
+				field_title = field.name.lower()
 				
 				# Group values for each match type
 				field_match = {}
-				for val,match in values:
+				for match, val in values:
 					if match not in field_match:
 						field_match[match] = []
 					field_match[match].append(val)
@@ -235,7 +245,7 @@ class CustomSearch( models.Model ):
 				
 		ordering = self.customsearchordering_set.all()
 		if len(ordering) > 0:
-			text.append("Order result by %s" % ", ".join( [o.field.name for o in ordering] ) )
+			text.append("Order result by %s." % ", ".join( [o.field.name.lower() for o in ordering] ) )
 		
 		return " ".join( text ) if text else "Include all %s." % self.model.model.model_class()._meta.verbose_name_plural.lower()		
 					
@@ -256,9 +266,9 @@ class CustomSearch( models.Model ):
 		for c in self.customsearchcondition_set.filter( field__model=self.model ):
 			tmp = exclude if c.exclude else include
 
-			if c.field.field_name not in tmp:
-				tmp[c.field.field_name] = []
-			tmp[c.field.field_name].append( ( c.value, c.match ) )
+			if c.field not in tmp:
+				tmp[c.field] = []
+			tmp[c.field].append( ( c.match, c.value ) )
 
 		return ( include, exclude )
 
@@ -274,10 +284,10 @@ class CustomSearch( models.Model ):
 		exclude_queries = []
 
 		for field, values in include.items():
-			include_queries.append( reduce( operator.or_, [models.Q( **{ "%s%s" % ( field, match ) : val } ) for ( val, match ) in values] ) )
+			include_queries.append( reduce( operator.or_, [models.Q( **{ "%s%s" % ( field.full_field_name(), match ) : val } ) for ( match, val ) in values] ) )
 
 		for field, values in exclude.items():
-			exclude_queries.append( reduce( operator.or_, [models.Q( **{ "%s%s" % ( field, match ) : val } ) for ( val, match ) in values] ) )
+			exclude_queries.append( reduce( operator.or_, [models.Q( **{ "%s%s" % ( field.full_field_name(), match ) : val } ) for ( match, val ) in values] ) )
 
 		include_queries = reduce( operator.and_, include_queries ) if len( include_queries ) > 0 else None
 		exclude_queries = reduce( operator.and_, exclude_queries ) if len( exclude_queries ) > 0 else None
@@ -294,10 +304,10 @@ class CustomSearch( models.Model ):
 		# Free text search in result set
 		if freetext:
 			qobjects = []
-			for f in CustomSearchField.objects.filter( model=self.model ):
+			for f in CustomSearchField.objects.filter( model=self.model, enable_search=True ):
 				arg = "%s__icontains" % f.full_field_name()
 				qobjects.append( models.Q( **{ arg : freetext } ) )
-			qs = qs.filter( reduce( operator.or_, qobjects ) )			
+			qs = qs.filter( reduce( operator.or_, qobjects ) ).distinct()	
 			
 		# Ordergin
 		ordering = self.customsearchordering_set.all()
@@ -323,7 +333,7 @@ class CustomSearchCondition( models.Model ):
 	"""
 	search = models.ForeignKey( CustomSearch )
 	exclude = models.BooleanField( default=False )
-	field = models.ForeignKey( CustomSearchField )
+	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search' : True } )
 	match = models.CharField( max_length=30, choices=MATCH_TYPE )
 	value = models.CharField( max_length=255, blank=True )
 
@@ -336,13 +346,16 @@ class CustomSearchCondition( models.Model ):
 		if self.field.model != self.search.model:
 			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.search.model.name ) )
 		
+		if not self.field.enable_search:
+			raise ValidationError( 'Field %s does not allow searching' % self.field )
+		
 
 class CustomSearchOrdering( models.Model ):
 	"""
 	Allow ordering of fields
 	"""
 	search = models.ForeignKey( CustomSearch )
-	field = models.ForeignKey( CustomSearchField )
+	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search' : True } )
 	descending = models.BooleanField( default=False )
 
 	def clean( self ):
@@ -353,6 +366,9 @@ class CustomSearchOrdering( models.Model ):
 
 		if self.field.model != self.search.model:
 			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.search.model.name ) )
+		
+		if not self.field.enable_search:
+			raise ValidationError( 'Field %s does not allow ordering' % self.field )
 
 
 
