@@ -307,15 +307,13 @@ class CustomSearch( models.Model ):
 			qobjects = []
 			for f in CustomSearchField.objects.filter( model=self.model, enable_search=True ):
 				arg = "%s__icontains" % f.full_field_name()
-				qobjects.append( models.Q( **{ arg : freetext } ) )
+				qobjects.append( models.Q( **{ str(arg) : freetext } ) )
 			qs = qs.filter( reduce( operator.or_, qobjects ) ).distinct()	
 			
-		# Ordergin
+		# Ordering
 		ordering = self.customsearchordering_set.all()
 		if len(ordering) > 0:
 			qs.order_by( *["%s%s" % ( "-" if o.descending else "", o.field.full_field_name() ) for o in ordering] )
-			
-		
 
 		return qs
 	
