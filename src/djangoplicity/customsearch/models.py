@@ -145,7 +145,8 @@ class CustomSearchLayout( models.Model ):
 					cols.append( "" )
 			return cols
 		elif m2m and not expand:
-			return ['"%s"' % "\";\"".join( [unicode( x ).replace( '"', '""' ) for x in getattr( obj, accessor ).all()] ) ]
+			tmp = "\";\"".join( [unicode( x ).replace( '"', '""' ) for x in getattr( obj, accessor ).all()] )			
+			return [ '"%s"' % tmp if tmp else "" ]
 		else:
 			return [getattr( obj, accessor )]
 			
@@ -284,10 +285,10 @@ class CustomSearch( models.Model ):
 		exclude_queries = []
 
 		for field, values in include.items():
-			include_queries.append( reduce( operator.or_, [models.Q( **{ "%s%s" % ( field.full_field_name(), match ) : val } ) for ( match, val ) in values] ) )
+			include_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )) : val } ) for ( match, val ) in values] ) )
 
 		for field, values in exclude.items():
-			exclude_queries.append( reduce( operator.or_, [models.Q( **{ "%s%s" % ( field.full_field_name(), match ) : val } ) for ( match, val ) in values] ) )
+			exclude_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )) : val } ) for ( match, val ) in values] ) )
 
 		include_queries = reduce( operator.and_, include_queries ) if len( include_queries ) > 0 else None
 		exclude_queries = reduce( operator.and_, exclude_queries ) if len( exclude_queries ) > 0 else None
