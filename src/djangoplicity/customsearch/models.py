@@ -89,7 +89,8 @@ class CustomSearchField( models.Model ):
 	field_name = models.SlugField()
 	selector = models.SlugField( blank=True )
 	enable_layout = models.BooleanField( default=True )
-	enable_search = models.BooleanField( default=True ) 
+	enable_search = models.BooleanField( default=True )
+	enable_freetext = models.BooleanField( default=True ) 
 
 	def full_field_name( self ):
 		return "%s%s" % ( self.field_name, self.selector )
@@ -319,33 +320,27 @@ class CustomSearch( models.Model ):
 			include_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )) : val } ) for ( match, val ) in values] ) )
 
 		for field, values in exclude.items():
-			exclude_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )) : val } ) for ( match, val ) in values] ) )
-
-		include_queries = reduce( operator.and_, include_queries ) if len( include_queries ) > 0 else None
-		exclude_queries = reduce( operator.and_, exclude_queries ) if len( exclude_queries ) > 0 else None
+			# Identical to include queries except that the Q object is negated with ~
+			exclude_queries.append( reduce( operator.or_, [~models.Q( **{ str("%s%s" % ( field.full_field_name(), match )) : val } ) for ( match, val ) in values] ) )
 
 		# Generate queryset for search.
 		modelclass = self.model.model.model_class()
 		qs = modelclass.objects.all()
-		if include_queries:
-			qs = qs.filter( include_queries )
-		if exclude_queries:
-			qs = qs.exclude( exclude_queries )
-		
-		
+		if include_queries or exclude_queries:
+			qs = qs.filter( *( include_queries + exclude_queries ) )
+
 		# Free text search in result set
 		if freetext:
 			qobjects = []
-			for f in CustomSearchField.objects.filter( model=self.model, enable_search=True ):
+			for f in CustomSearchField.objects.filter( model=self.model, enable_freetext=True ):
 				arg = "%s__icontains" % f.full_field_name()
-				qobjects.append( models.Q( **{ str(arg) : freetext } ) )
+				qobjects.append( models.Q( **{ str( arg ) : freetext } ) )
 			qs = qs.filter( reduce( operator.or_, qobjects ) )
-			
-		qs = qs.distinct()	
+		qs = qs.distinct()
 			
 		# Ordering
 		ordering = self.customsearchordering_set.all()
-		if len(ordering) > 0:
+		if len( ordering ) > 0:
 			qs = qs.order_by( *["%s%s" % ( "-" if o.descending else "", o.field.full_field_name() ) for o in ordering] )
 
 		return qs
