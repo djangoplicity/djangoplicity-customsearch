@@ -30,11 +30,12 @@
 
 
 {% block coltype %}flex{% endblock %}
-{% block site_title %}TEST{% endblock %}
+{% block site_title %}{% endblock %}
 
 {% block content %}
  <h1>Custom Search: {{ search.name }}</h1>
 <p><strong>Description:</strong> {{search.human_readable_text}}</p>
+<p><strong>Total:</strong> {{object_count}}</p>
 
 <div id="content-main">
     {% block object-tools %}

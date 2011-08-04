@@ -205,6 +205,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 			{
 				'search' : search,
 				'objects' : objects,
+				'object_count' : qs.count(),
 				'data_table' : search.layout.data_table( objects.object_list ), 
 				'messages': [],
 				'app_label' : search._meta.app_label,

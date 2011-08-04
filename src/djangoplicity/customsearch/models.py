@@ -49,6 +49,15 @@ MATCH_TYPE = (
 	( '__istartswith', 'Starts with (case-insensitive)' ),
 	( '__iendswith', 'Ends with (case-insensitive)' ),
 	( '__iregex', 'Regular expression (case-insensitive)' ),
+	( '__year', 'Year' ),
+	( '__month', 'Month' ),
+	( '__day', 'Day' ),
+	( '__week_day', 'Week day' ),
+	( '__gt', 'Greater than' ),
+	( '__gte', 'Greater than or equal to' ),
+	( '__lt', 'Less than' ),
+	( '__lte', 'Less than or equal to' ),
+	( '__isnull', 'Is null' ),
  )
 
 class CustomSearchGroup( models.Model ):
@@ -234,10 +243,20 @@ class CustomSearch( models.Model ):
 					elif match == '__regex':
 						match_title = "matches regular expression"
 					elif match == '__iregex':
-						match_title = "matches regular expression (case-insensitive)" 
+						match_title = "matches regular expression (case-insensitive)"
+					elif match in ['__year','__month','__day',"__week_day"]:
+						match_title = "%s is" % match_types[match].lower()
+					elif match in ['__gt','__gte','__lt',"__lte"]:
+						match_title = "is %s" % match_types[match].lower()
 					else:
 						match_title = match_types[match].lower()
-					match_texts.append( "%s %s" % ( match_title, " or ".join( ['"%s"' % x for x in values] ) ) )
+					
+					if match == "__isnull" and True in values:
+						match_texts.append( "is null" )
+					elif match == "__isnull" and False in values:
+						match_texts.append( "is not null" )
+					else:
+						match_texts.append( "%s %s" % ( match_title, " or ".join( ['"%s"' % x for x in values] ) ) )
 				field_texts.append( "%s %s" % ( field_title, " or ".join( match_texts ) ) )
 			
 
@@ -269,7 +288,7 @@ class CustomSearch( models.Model ):
 
 			if c.field not in tmp:
 				tmp[c.field] = []
-			tmp[c.field].append( ( c.match, c.value ) )
+			tmp[c.field].append( ( c.match, c.prepared_value() ) )
 
 		return ( include, exclude )
 
@@ -308,12 +327,14 @@ class CustomSearch( models.Model ):
 			for f in CustomSearchField.objects.filter( model=self.model, enable_search=True ):
 				arg = "%s__icontains" % f.full_field_name()
 				qobjects.append( models.Q( **{ str(arg) : freetext } ) )
-			qs = qs.filter( reduce( operator.or_, qobjects ) ).distinct()	
+			qs = qs.filter( reduce( operator.or_, qobjects ) )
+			
+		qs = qs.distinct()	
 			
 		# Ordering
 		ordering = self.customsearchordering_set.all()
 		if len(ordering) > 0:
-			qs.order_by( *["%s%s" % ( "-" if o.descending else "", o.field.full_field_name() ) for o in ordering] )
+			qs = qs.order_by( *["%s%s" % ( "-" if o.descending else "", o.field.full_field_name() ) for o in ordering] )
 
 		return qs
 	
@@ -330,17 +351,52 @@ class CustomSearchCondition( models.Model ):
 	statements are  passed to the QuyerSet exclude() method. Each 
 	condition have the following matches:
 	"""
+	number_lookups = ['__year', '__month', '__day', '__weekday',]
+	boolean_lookups = ['__isnull',]
+	
 	search = models.ForeignKey( CustomSearch )
 	exclude = models.BooleanField( default=False )
 	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search' : True } )
 	match = models.CharField( max_length=30, choices=MATCH_TYPE )
 	value = models.CharField( max_length=255, blank=True )
+	
+	def prepared_value( self ):
+		"""
+		Prepare value from string representation.
+		"""
+		if self.match in self.number_lookups:
+			try:
+				return int( self.value )
+			except ValueError:
+				raise ValidationError("Value is not an integer.")
+		elif self.match in self.boolean_lookups:
+			if self.value.strip().lower() == "false":
+				return False
+			elif self.value.strip().lower() == "true":
+				return True
+			else:
+				raise ValidationError("Value is not a truth value.")
+		else:
+			return self.value
+			
+	def check_value( self ):
+		"""
+		Check if value is valid for the given match type.
+		"""
+		if self.match in self.number_lookups:
+			try:
+				int( self.value )
+			except ValueError:
+				raise ValidationError( "Value must be an integer for match type '%s'." % self.get_match_display() )
+		elif self.match in self.boolean_lookups:
+			if self.value.strip().lower() not in ['true', 'false']:
+				raise ValidationError("Value must be either true or false for match type '%s'." % self.get_match_display() )
 
 	def clean( self ):
 		"""
 		Ensure the field model matches the search model.
 		"""
-		from django.core.exceptions import ValidationError
+		self.check_value()
 
 		if self.field.model != self.search.model:
 			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.search.model.name ) )
@@ -361,8 +417,6 @@ class CustomSearchOrdering( models.Model ):
 		"""
 		Ensure the field model matches the search model.
 		"""
-		from django.core.exceptions import ValidationError
-
 		if self.field.model != self.search.model:
 			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.search.model.name ) )
 		
