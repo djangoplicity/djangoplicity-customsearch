@@ -292,6 +292,10 @@ class CustomSearch( models.Model ):
 
 		return ( include, exclude )
 
+	def get_empty_query_set( self ):
+		modelclass = self.model.model.model_class()
+		return modelclass.objects.none()
+
 	def get_query_set( self, freetext=None ):
 		"""
 		Execute the custom search

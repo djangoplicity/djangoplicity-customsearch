@@ -136,13 +136,21 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 
 		# Search
 		searchval = request.GET.get( "s", None )
+		
 		qs = search.get_query_set( freetext=searchval )
 		
-		return ( search, qs, searchval )
+		try:
+			qs.count()
+			error = ""
+		except Exception, e:
+			error = unicode( e )
+			qs = search.get_empty_query_set()
+		
+		return ( search, qs, searchval, error )
 
 	
 	def export_view( self, request, pk=None ):
-		( search, qs, searchval ) = self.get_results_query_set( request, pk )
+		( search, qs, searchval, error ) = self.get_results_query_set( request, pk )
 		return HttpResponse( "Not yet supported." )
 
 
@@ -154,7 +162,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 			return HttpResponse("Labels generation support not available.")
 		
 		# Get queryset
-		( search, qs, searchval ) = self.get_results_query_set( request, pk )
+		( search, qs, searchval, error ) = self.get_results_query_set( request, pk )
 
 		# Get label 
 		try:
@@ -168,6 +176,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 				"admin/customsearch/labels.html", 
 				{
 					'search' : search,
+					'error' : error,
 					'labels' : labels,
 					'object_count' : qs.count(),
 					'messages': [],
@@ -184,7 +193,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 		"""
 		Perform search
 		"""
-		( search, qs, searchval ) = self.get_results_query_set( request, pk )
+		( search, qs, searchval, error ) = self.get_results_query_set( request, pk )
 
 		# Get page num
 		try:
@@ -204,6 +213,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 			"admin/customsearch/list.html", 
 			{
 				'search' : search,
+				'error' : error,
 				'objects' : objects,
 				'object_count' : qs.count(),
 				'data_table' : search.layout.data_table( objects.object_list ), 
