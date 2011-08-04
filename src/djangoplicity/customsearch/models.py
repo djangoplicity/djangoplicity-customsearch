@@ -103,6 +103,9 @@ class CustomSearchField( models.Model ):
 
 	def __unicode__( self ):
 		return "%s: %s" % ( self.model.name, self.name, )
+	
+	class Meta:
+		ordering = ['model__name', 'name']
 
 
 class CustomSearchLayout( models.Model ):
@@ -192,6 +195,10 @@ class CustomSearchLayoutField( models.Model ):
 			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.layout.model.name ) )
 		if not self.field.enable_layout:
 			raise ValidationError( 'Field %s does not allow use in layout' % self.field )
+		
+	class Meta:
+		ordering = ['position', 'id']
+
 
 
 
@@ -209,6 +216,7 @@ class CustomSearch( models.Model ):
 		permissions = [
 			( "can_view", "Can view all custom searches" ),
 		]
+		ordering = ['name']
 		
 	def __unicode__( self ):
 		return self.name
