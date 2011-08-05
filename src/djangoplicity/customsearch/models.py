@@ -30,6 +30,17 @@
 # POSSIBILITY OF SUCH DAMAGE
 #
 
+"""
+This custom search application allows admin users to create ad-hoc queries into
+nearly any django model, using a subset of the django queryset API. 
+
+An super user must intially specify the models and fields that can be search on. Once
+that is done, any admin user can make queries as they like.
+
+The search results can either be browsed ( and search with freetext), exported or
+used for e.g. label generation if djangoplicity-contacts is installed.
+"""
+
 
 from django.db import models
 from django.utils.translation import ugettext as _
@@ -58,7 +69,10 @@ MATCH_TYPE = (
 	( '__lt', 'Less than' ),
 	( '__lte', 'Less than or equal to' ),
 	( '__isnull', 'Is null' ),
- )
+)
+"""
+List of allowed field loookup types
+"""
 
 class CustomSearchGroup( models.Model ):
 	"""
