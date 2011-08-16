@@ -334,8 +334,8 @@ class CustomSearch( models.Model ):
 			include_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )) : val } ) for ( match, val ) in values] ) )
 
 		for field, values in exclude.items():
-			# Identical to include queries except that the Q object is negated with ~
-			exclude_queries.append( reduce( operator.or_, [~models.Q( **{ str("%s%s" % ( field.full_field_name(), match )) : val } ) for ( match, val ) in values] ) )
+			# Identical to include queries except that the Q object is negated with ~ and all qs are and'ed together
+			exclude_queries.append( reduce( operator.and_, [~models.Q( **{ str("%s%s" % ( field.full_field_name(), match )) : val } ) for ( match, val ) in values] ) )
 
 		# Generate queryset for search.
 		modelclass = self.model.model.model_class()
