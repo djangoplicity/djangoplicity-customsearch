@@ -52,6 +52,12 @@ try:
 	has_labels = True
 except ImportError:
 	has_labels = False
+	
+try:
+	from djangoplicity.contacts.exporter import ExcelExporter
+	has_exporter = True
+except ImportError:
+	has_exporter = False
 
 class CustomSearchFieldInlineAdmin( admin.TabularInline ):
 	model = CustomSearchField
@@ -151,7 +157,17 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 	
 	def export_view( self, request, pk=None ):
 		( search, qs, searchval, error ) = self.get_results_query_set( request, pk )
-		return HttpResponse( "Not yet supported." )
+		
+		exporter = ExcelExporter( header=[ ( x[0], None ) for x in search.layout.header() ] )
+		
+		for row in search.layout.data_table( qs ):
+			exporter.writerow( row['values'] )
+		
+		response = HttpResponse( mimetype=exporter.mimetype )
+		response['Content-Disposition'] = 'attachment; filename=%s.xls' % slugify( search.name )
+		exporter.save( response )
+		
+		return response
 
 
 	def labels_view( self, request, pk=None ):
