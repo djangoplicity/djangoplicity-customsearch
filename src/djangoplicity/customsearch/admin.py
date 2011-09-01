@@ -46,17 +46,18 @@ from djangoplicity.admincomments.admin import AdminCommentInline, \
 from djangoplicity.customsearch.models import CustomSearch, \
 	CustomSearchCondition, CustomSearchField, CustomSearchModel, CustomSearchGroup, \
 	CustomSearchLayout, CustomSearchLayoutField, CustomSearchOrdering
+from django.db import DatabaseError
 
 try:
 	from djangoplicity.contacts.models import Label
 	has_labels = True
-except ImportError:
+except (ImportError, DatabaseError):
 	has_labels = False
 	
 try:
 	from djangoplicity.contacts.exporter import ExcelExporter
 	has_exporter = True
-except ImportError:
+except (ImportError, DatabaseError):
 	has_exporter = False
 
 class CustomSearchFieldInlineAdmin( admin.TabularInline ):

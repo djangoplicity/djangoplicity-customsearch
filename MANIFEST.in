@@ -31,6 +31,6 @@
 #
 include distribute_setup.py *.txt
 recursive-include docs *
-recursive-include src/djangoplicity.customsearch/templates *
-recursive-include src/djangoplicity.customsearch/static * 
+recursive-include src/djangoplicity/customsearch/templates *
+recursive-include src/djangoplicity/customsearch/static * 
 prune docs/build
