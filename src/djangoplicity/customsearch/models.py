@@ -111,6 +111,9 @@ class CustomSearchField( models.Model ):
 	
 	def get_modelclass_field( self ):
 		return self.model.model.model_class()._meta.get_field_by_name( self.field_name )
+	
+	def sortable( self ):
+		return True
 
 	def clean( self ):
 		if self.selector != "" and not self.selector.startswith( "__" ):
@@ -142,10 +145,11 @@ class CustomSearchLayout( models.Model ):
 		"""
 		"""
 		data = []
+		layout_qs = CustomSearchLayoutField.objects.filter( layout=self ).select_related()
 
 		for obj in query_set:
 			row = []
-			for f in CustomSearchLayoutField.objects.filter( layout=self ).select_related():
+			for f in layout_qs:
 				row += self._get_field_value( obj, f.field, expand=f.expand_rel )
 			data.append( { 'object' : obj, 'values' : row } )
 		
@@ -187,10 +191,10 @@ class CustomSearchLayout( models.Model ):
 			if direct:
 				cols = []
 				for v in field_object.related.parent_model.objects.all():
-					cols.append( ( "%s: %s" % ( field.name, unicode( v ) ) , "%s:%s" % ( field.field_name, v.pk ) ) )
+					cols.append( ( field, "%s: %s" % ( field.name, unicode( v ) ) , "%s:%s" % ( field.field_name, v.pk ) ) )
 				return cols
 		else:
-			return [( field.name, field.field_name )]
+			return [( field, field.name, field.field_name )]
 		
 		
 	
@@ -306,7 +310,7 @@ class CustomSearch( models.Model ):
 		include = {}
 		exclude = {}
 
-		for c in self.customsearchcondition_set.filter( field__model=self.model ):
+		for c in self.customsearchcondition_set.filter( field__model=self.model ).select_related():
 			tmp = exclude if c.exclude else include
 
 			if c.field not in tmp:
@@ -319,7 +323,7 @@ class CustomSearch( models.Model ):
 		modelclass = self.model.model.model_class()
 		return modelclass.objects.none()
 
-	def get_query_set( self, freetext=None ):
+	def get_query_set( self, freetext=None, override_ordering=None ):
 		"""
 		Execute the custom search
 		"""
@@ -353,9 +357,12 @@ class CustomSearch( models.Model ):
 		qs = qs.distinct()
 			
 		# Ordering
-		ordering = self.customsearchordering_set.all()
-		if len( ordering ) > 0:
-			qs = qs.order_by( *["%s%s" % ( "-" if o.descending else "", o.field.full_field_name() ) for o in ordering] )
+		if override_ordering is None:
+			ordering = self.customsearchordering_set.all()
+			if len( ordering ) > 0:
+				qs = qs.order_by( *["%s%s" % ( "-" if o.descending else "", o.field.full_field_name() ) for o in ordering] )
+		else:
+			qs = qs.order_by( *override_ordering )
 
 		return qs
 	

@@ -1,5 +1,6 @@
 {% extends "admin/base_site.html" %}
 {% load adminmedia admin_list i18n %}
+{% load url from future %}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -49,8 +50,8 @@
         <ul class="object-tools">
           {% block object-tools-items %}
           {% if not error %}
-            <li><a href="../labels/{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Labels</a></li>
-            <li><a href="../export/{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Export</a></li>
+            <li><a href="../labels/{% if searchval or params %}?s={{ searchval|escape }}{{params}}{% endif %}" class="historylink">Labels</a></li>
+            <li><a href="../export/{% if searchval or params %}?s={{ searchval|escape }}{{params}}{% endif %}" class="historylink">Export</a></li>
           {% endif %}
             <li><a href="../" class="historylink">Edit</a></li>
           {% endblock %}
@@ -77,14 +78,16 @@
 			<table cellspacing="0" id="result_list">
 			<thead>
 			<tr>
-			{% for name,field_name in search.layout.header %}
-			<th>{{name}}</th>
+			<th scope="col" class="action-checbox-column">Edit</th>
+			{% for header in results_header %}
+			<th scope="col"{{header.class_attrib}}>{% if header.sortable %}<a href="{{header.url}}">{% endif %}{{header.name}}{% if header.sortable %}</a>{% endif %}</th>
 			{% endfor %}
 			</tr>
 			</thead>
 			<tbody>
 			{% for row in data_table %}
 			<tr class="{% cycle 'row1' 'row2' %}">
+			<td align="center"><a href="{% url reverse_name row.object.pk %}" class="changelink">&nbsp;</a></td>
 			{% for value in row.values %}
 			<td>{{value}}</td>
 			{% endfor %}
@@ -98,7 +101,7 @@
 		<p class="paginator">
 		{% if objects.has_other_pages %}
 		{% for i in objects.paginator.page_range %}
-		{% if objects.number == i %}<span class="this-page">{{i}}</span>{% else %}<a href="?p={{i}}">{{i}}</a> {% endif %}		
+		{% if objects.number == i %}<span class="this-page">{{i}}</span>{% else %}<a href="?p={{i}}{{params}}">{{i}}</a> {% endif %}		
 		{% endfor %}
 		{% endif %}
 		</p>

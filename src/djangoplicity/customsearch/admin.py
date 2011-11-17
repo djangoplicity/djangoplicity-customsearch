@@ -39,7 +39,8 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
-from django.utils.safestring import mark_safe
+from django.utils.encoding import smart_unicode
+from django.utils.safestring import mark_safe 
 from django.utils.translation import ugettext as _
 from djangoplicity.admincomments.admin import AdminCommentInline, \
 	AdminCommentMixin
@@ -51,13 +52,13 @@ from django.db import DatabaseError
 try:
 	from djangoplicity.contacts.models import Label
 	has_labels = True
-except (ImportError, DatabaseError):
+except ( ImportError, DatabaseError ):
 	has_labels = False
-	
+
 try:
 	from djangoplicity.contacts.exporter import ExcelExporter
 	has_exporter = True
-except (ImportError, DatabaseError):
+except ( ImportError, DatabaseError ):
 	has_exporter = False
 
 class CustomSearchFieldInlineAdmin( admin.TabularInline ):
@@ -68,11 +69,11 @@ class CustomSearchFieldInlineAdmin( admin.TabularInline ):
 class CustomSearchConditionInlineAdmin( admin.TabularInline ):
 	model = CustomSearchCondition
 	extra = 3
-	
+
 class CustomSearchOrderingInlineAdmin( admin.TabularInline ):
 	model = CustomSearchOrdering
 	extra = 1
-	
+
 class CustomSearchLayoutFieldInlineAdmin( admin.TabularInline ):
 	model = CustomSearchLayoutField
 	extra = 3
@@ -81,7 +82,7 @@ class CustomSearchModelAdmin( admin.ModelAdmin ):
 	list_display = ['name', 'model', 'app' ]
 	search_fields = ['name', ]
 	inlines = [ CustomSearchFieldInlineAdmin ]
-	
+
 	def app( self, obj ):
 		return obj.model.app_label
 
@@ -110,22 +111,22 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 	)
 	inlines = [ CustomSearchConditionInlineAdmin, CustomSearchOrderingInlineAdmin, AdminCommentInline ]
 	readonly_fields = ['human_readable_text']
-	
+
 	def admin_results_url( self, obj ):
 		return mark_safe( """<a href="%s/search/">Results</a>""" % obj.pk )
 	admin_results_url.short_description = "Results"
 	admin_results_url.allow_tags = True
-	
+
 	def admin_export_url( self, obj ):
 		return mark_safe( """<a href="%s/export/">Export</a>""" % obj.pk )
 	admin_export_url.short_description = "Export"
 	admin_export_url.allow_tags = True
-	
+
 	def admin_labels_url( self, obj ):
 		return mark_safe( """<a href="%s/labels/">Labels</a>""" % obj.pk )
 	admin_labels_url.short_description = "Labels"
 	admin_labels_url.allow_tags = True
-	
+
 	def get_urls( self ):
 		urls = super( CustomSearchAdmin, self ).get_urls()
 		extra_urls = patterns( '',
@@ -134,40 +135,64 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 			( r'^(?P<pk>[0-9]+)/labels/$', self.admin_site.admin_view( self.labels_view ) ),
 		)
 		return extra_urls + urls
-	
-	def get_results_query_set( self, request, pk ):
+
+	def get_results_query_set( self, request, pk, evaluate=True ):
 		"""
 		Get the queryset for the selected custom search.
 		"""
 		search = get_object_or_404( CustomSearch, pk=pk )
+		header = search.layout.header()
 
 		# Search
 		searchval = request.GET.get( "s", None )
-		
-		qs = search.get_query_set( freetext=searchval )
+
+		# Ordering
+		search_ordering = None
 		
 		try:
-			qs.count()
-			error = ""
-		except Exception, e:
-			error = unicode( e )
-			qs = search.get_empty_query_set()
+			ordering = request.GET.get( "o", None )
+			ordering_direction = request.GET.get( "ot", None )
 		
-		return ( search, qs, searchval, error )
+			if ordering_direction not in ['asc', 'desc']:
+				ordering_direction = 'asc'
 
-	
+			ordering = int( ordering )
+			if ordering <= 0:
+				raise ValueError
+			( field, name, field_name ) = header[ordering-1]
+			if field.sortable():
+				search_ordering = ['%s%s' % ( '' if ordering_direction == 'asc' else '-', field.full_field_name() )]
+		except ( ValueError, IndexError, TypeError ):
+			ordering = None
+			ordering_direction = None
+
+		qs = search.get_query_set( freetext=searchval, override_ordering=search_ordering )
+
+		if evaluate:
+			try:
+				len( qs )
+				error = ""
+			except Exception, e:
+				error = unicode( e )
+				qs = search.get_empty_query_set()
+		else:
+			error = ""
+
+		return ( search, qs, searchval, error, header, ordering, ordering_direction )
+
+
 	def export_view( self, request, pk=None ):
-		( search, qs, searchval, error ) = self.get_results_query_set( request, pk )
-		
-		exporter = ExcelExporter( header=[ ( x[0], None ) for x in search.layout.header() ] )
-		
+		( search, qs, searchval, error, header, o, ot ) = self.get_results_query_set( request, pk )
+
+		exporter = ExcelExporter( header=[ ( x[1], None ) for x in header ] )
+
 		for row in search.layout.data_table( qs ):
 			exporter.writerow( row['values'] )
-		
+
 		response = HttpResponse( mimetype=exporter.mimetype )
 		response['Content-Disposition'] = 'attachment; filename=%s.xls' % slugify( search.name )
 		exporter.save( response )
-		
+
 		return response
 
 
@@ -176,10 +201,10 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 		Generate labels or show list of available labels
 		"""
 		if not has_labels:
-			return HttpResponse("Labels generation support not available.")
-		
+			return HttpResponse( "Labels generation support not available." )
+
 		# Get queryset
-		( search, qs, searchval, error ) = self.get_results_query_set( request, pk )
+		( search, qs, searchval, error, header, o, ot ) = self.get_results_query_set( request, pk )
 
 		# Get label 
 		try:
@@ -188,9 +213,9 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 		except Label.DoesNotExist:
 			# No label, so display list of available labels
 			labels = Label.objects.filter( enabled=True ).order_by( 'name' )
-			
-			return render_to_response(
-				"admin/customsearch/labels.html", 
+
+			return render_to_response( 
+				"admin/customsearch/labels.html",
 				{
 					'search' : search,
 					'error' : error,
@@ -201,7 +226,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 					'opts' : search._meta,
 					'searchval' : searchval if searchval is not None else "",
 					'has_labels' : has_labels,
-				}, 
+				},
 				context_instance=RequestContext( request )
 			)
 
@@ -210,7 +235,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 		"""
 		Perform search
 		"""
-		( search, qs, searchval, error ) = self.get_results_query_set( request, pk )
+		( search, qs, searchval, error, header, o, ot ) = self.get_results_query_set( request, pk, evaluate=False )
 
 		# Get page num
 		try:
@@ -218,32 +243,56 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 		except ValueError:
 			page = 1
 
-		paginator = Paginator( qs, 100 )
-		
-		# Adapt page to list
 		try:
-			objects = paginator.page( page )
-		except ( EmptyPage, InvalidPage ):
-			objects = paginator.page( paginator.num_pages )
+			paginator = Paginator( qs, 100 )
+	
+			# Adapt page to list
+			try:
+				objects = paginator.page( page )
+			except ( EmptyPage, InvalidPage ):
+				objects = paginator.page( paginator.num_pages )
+		except Exception, e:
+			error = unicode( e )
+			qs = search.get_empty_query_set()
 			
+		# Paginator params
+		from urllib import urlencode
+		params = "&%s" % urlencode( { 'o' : o, 'ot' : ot } ) if o and ot else ""
+			
+		# Results header
+		results_header = []
+		i = 1
+		for field, name, field_name in header:
+			results_header.append( {
+				'name' : name,
+				'field_name' : field_name,
+				'sortable' : field.sortable(),
+				'url' : mark_safe( "?%s" % urlencode( { 'o' : i, 'ot' : ( 'desc' if ot == 'asc' else 'asc' ) if o == i else 'asc' } )),
+				'class_attrib' : mark_safe( 'class="sorted %s"' % ('ascending' if ot == 'asc' else 'descending' ) if o == i else ''),
+			} )
+			i += 1
+
 		return render_to_response( 
-			"admin/customsearch/list.html", 
+			"admin/customsearch/list.html",
 			{
+				'results_header' : results_header,
+				'params' : mark_safe( params ),
 				'search' : search,
 				'error' : error,
 				'objects' : objects,
-				'object_count' : qs.count(),
-				'data_table' : search.layout.data_table( objects.object_list ), 
+				'object_count' : len( qs ),
+				'data_table' : search.layout.data_table( objects.object_list ),
 				'messages': [],
 				'app_label' : search._meta.app_label,
 				'opts' : search._meta,
+				'reverse_name' : "admin:%s_%s_change" % ( qs.model._meta.app_label, qs.model._meta.module_name ),
 				'searchval' : searchval if searchval is not None else "",
 				'has_labels' : has_labels,
-			}, 
-			context_instance=RequestContext( request ) 
+			},
+			context_instance=RequestContext( request )
 		)
 
-		
+
 
 
 def register_with_admin( admin_site ):
@@ -251,6 +300,6 @@ def register_with_admin( admin_site ):
 	admin_site.register( CustomSearchModel, CustomSearchModelAdmin )
 	admin_site.register( CustomSearchGroup, CustomSearchGroupAdmin )
 	admin_site.register( CustomSearchLayout, CustomSearchLayoutAdmin )
-		
+
 # Register with default admin site	
 register_with_admin( admin.site )
