@@ -96,6 +96,13 @@ class CustomSearchLayoutAdmin( admin.ModelAdmin ):
 class CustomSearchGroupAdmin( admin.ModelAdmin ):
 	list_display = ['name', ]
 	search_fields = ['name', ]
+	
+class CustomSearchConditionAdmin( admin.ModelAdmin ):
+	list_display = ['search', 'exclude', 'field', 'match', 'value' ]
+	list_filter = ['exclude','match',]
+	list_editable = [ 'exclude', 'field', 'match', 'value' ]
+	search_fields = [ 'search__name', 'field__name', 'value']
+	readonly_fields = ['search']
 
 class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 	list_display = ['name', 'model', 'group', 'admin_results_url', 'admin_export_url', 'admin_labels_url' ]
@@ -300,6 +307,8 @@ def register_with_admin( admin_site ):
 	admin_site.register( CustomSearchModel, CustomSearchModelAdmin )
 	admin_site.register( CustomSearchGroup, CustomSearchGroupAdmin )
 	admin_site.register( CustomSearchLayout, CustomSearchLayoutAdmin )
+	admin_site.register( CustomSearchCondition, CustomSearchConditionAdmin )
+	
 
 # Register with default admin site	
 register_with_admin( admin.site )
