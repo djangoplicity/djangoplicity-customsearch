@@ -364,7 +364,7 @@ class CustomSearch( models.Model ):
 		if override_ordering is None:
 			ordering = self.customsearchordering_set.all()
 			if len( ordering ) > 0:
-				qs = qs.order_by( *["%s%s" % ( "-" if o.descending else "", o.field.full_field_name() ) for o in ordering] )
+				qs = qs.order_by( *["%s%s" % ( "-" if o.descending else "", o.field.sort_field_name() ) for o in ordering] )
 		else:
 			qs = qs.order_by( *override_ordering )
 
