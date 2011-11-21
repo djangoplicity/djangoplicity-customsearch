@@ -168,7 +168,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 				raise ValueError
 			( field, name, field_name ) = header[ordering-1]
 			if field.sortable():
-				search_ordering = ['%s%s' % ( '' if ordering_direction == 'asc' else '-', field.full_field_name() )]
+				search_ordering = ['%s%s' % ( '' if ordering_direction == 'asc' else '-', field.sort_field_name() )]
 		except ( ValueError, IndexError, TypeError ):
 			ordering = None
 			ordering_direction = None

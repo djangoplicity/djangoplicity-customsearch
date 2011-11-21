@@ -102,12 +102,16 @@ class CustomSearchField( models.Model ):
 	name = models.CharField( max_length=255 )
 	field_name = models.SlugField()
 	selector = models.SlugField( blank=True )
+	sort_selector = models.SlugField( blank=True )
 	enable_layout = models.BooleanField( default=True )
 	enable_search = models.BooleanField( default=True )
 	enable_freetext = models.BooleanField( default=True ) 
 
 	def full_field_name( self ):
 		return "%s%s" % ( self.field_name, self.selector )
+	
+	def sort_field_name( self ):
+		return "%s%s" % ( self.field_name, self.sort_selector if self.sort_selector else self.selector )
 	
 	def get_modelclass_field( self ):
 		return self.model.model.model_class()._meta.get_field_by_name( self.field_name )
