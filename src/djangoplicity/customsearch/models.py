@@ -109,10 +109,10 @@ class CustomSearchField( models.Model ):
 	enable_freetext = models.BooleanField( default=True ) 
 
 	def full_field_name( self ):
-		return "%s%s" % ( self.field_name, self.selector )
+		return str( "%s%s" % ( self.field_name, self.selector ) )
 	
 	def sort_field_name( self ):
-		return "%s%s" % ( self.field_name, self.sort_selector if self.sort_selector else self.selector )
+		return str( "%s%s" % ( self.field_name, self.sort_selector if self.sort_selector else self.selector ) )
 	
 	def get_modelclass_field( self ):
 		return self.model.model.model_class()._meta.get_field_by_name( self.field_name )
@@ -474,9 +474,9 @@ class CustomSearchOrdering( models.Model ):
 		"""
 		if self.field.sort_selector or self.field.selector:
 			if self.descending:
-				qs = qs.annotate( **{ '%s__max' % self.field.sort_field_name() : Max( self.field.sort_field_name() ) } )
+				qs = qs.annotate( **{ str('%s__max') % self.field.sort_field_name() : Max( self.field.sort_field_name() ) } )
 			else:
-				qs = qs.annotate( **{ '%s__min' % self.field.sort_field_name() : Min( self.field.sort_field_name() ) } )
+				qs = qs.annotate( **{ str('%s__min') % self.field.sort_field_name() : Min( self.field.sort_field_name() ) } )
 		
 		return qs
 	
