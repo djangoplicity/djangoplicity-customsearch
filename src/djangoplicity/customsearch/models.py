@@ -42,12 +42,13 @@ used for e.g. label generation if djangoplicity-contacts is installed.
 """
 
 
-from django.db import models
-from django.utils.translation import ugettext as _
 from django.contrib.contenttypes.models import ContentType
-import operator
 from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models.aggregates import Max, Min
 from django.db.models.related import RelatedObject
+from django.utils.translation import ugettext as _
+import operator
 
 MATCH_TYPE = ( 
 	( '__exact', 'Exact' ),
@@ -359,15 +360,25 @@ class CustomSearch( models.Model ):
 				qobjects.append( models.Q( **{ str( arg ) : freetext } ) )
 			qs = qs.filter( reduce( operator.or_, qobjects ) )
 		qs = qs.distinct()
-			
+		
 		# Ordering
+		# ========
+		# NOTE: distinct() and order_by() does not work well together (https://docs.djangoproject.com/en/1.3/ref/models/querysets/#distinct).
+		# If you order by a related field (e.g. groups__name) then groups__name is included in the SELECT columns (e.g SELECT first_name, ..., contact_groups.name). 
+		# This means that distinct() method (akak SELECT DISTINCT) will no longer be able to detect duplicate Contact objects
+		#
+		# The work around is to either annotate each Model object with the value you want to order by, or add an extra attribute 
+		# on the Model you want to order (see e.g. http://archlinux.me/dusty/2010/12/07/django-dont-use-distinct-and-order_by-across-relations/)       
 		if override_ordering is None:
-			ordering = self.customsearchordering_set.all()
-			if len( ordering ) > 0:
-				qs = qs.order_by( *["%s%s" % ( "-" if o.descending else "", o.field.sort_field_name() ) for o in ordering] )
+			ordering = self.customsearchordering_set.all().select_related( 'field' )
 		else:
-			qs = qs.order_by( *override_ordering )
-
+			ordering = override_ordering
+			
+		if len( ordering ) > 0:
+			for o in ordering:
+				qs = o.annotate_qs( qs )
+			qs = qs.order_by( *[o.order_by_field() for o in ordering] )
+		
 		return qs
 	
 	def get_data_table( self ):
@@ -444,7 +455,31 @@ class CustomSearchOrdering( models.Model ):
 	search = models.ForeignKey( CustomSearch )
 	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search' : True } )
 	descending = models.BooleanField( default=False )
+	
+	def order_by_field( self ):
+		"""
+		"""
+		sort_field = self.field.sort_field_name()
+		
+		if self.field.sort_selector or self.field.selector:
+			order_by = '-%s__max' % sort_field if self.descending else '%s__min' % sort_field
+		else:
+			order_by =  '-%s' % sort_field if self.descending else sort_field 
+		
+		return order_by
 
+	
+	def annotate_qs( self, qs ):
+		"""
+		"""
+		if self.field.sort_selector or self.field.selector:
+			if self.descending:
+				qs = qs.annotate( **{ '%s__max' % self.field.sort_field_name() : Max( self.field.sort_field_name() ) } )
+			else:
+				qs = qs.annotate( **{ '%s__min' % self.field.sort_field_name() : Min( self.field.sort_field_name() ) } )
+		
+		return qs
+	
 	def clean( self ):
 		"""
 		Ensure the field model matches the search model.

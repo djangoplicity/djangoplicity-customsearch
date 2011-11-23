@@ -168,7 +168,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 				raise ValueError
 			( field, name, field_name ) = header[ordering-1]
 			if field.sortable():
-				search_ordering = ['%s%s' % ( '' if ordering_direction == 'asc' else '-', field.sort_field_name() )]
+				search_ordering = [ CustomSearchOrdering( field=field, descending=( ordering_direction == 'desc' ) ) ]
 		except ( ValueError, IndexError, TypeError ):
 			ordering = None
 			ordering_direction = None
@@ -177,7 +177,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 
 		if evaluate:
 			try:
-				len( qs )
+				qs.count()
 				error = ""
 			except Exception, e:
 				error = unicode( e )
@@ -261,6 +261,8 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 		except Exception, e:
 			error = unicode( e )
 			qs = search.get_empty_query_set()
+			paginator = Paginator( qs, 100 )
+			objects = paginator.page( 1 )
 			
 		# Paginator params
 		from urllib import urlencode
@@ -270,11 +272,15 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 		results_header = []
 		i = 1
 		for field, name, field_name in header:
+			headerparams = { 'o' : i, 'ot' : ( 'desc' if ot == 'asc' else 'asc' ) if o == i else 'asc' }
+			if searchval:
+				headerparams.update( { 's' : searchval } )
+			
 			results_header.append( {
 				'name' : name,
 				'field_name' : field_name,
 				'sortable' : field.sortable(),
-				'url' : mark_safe( "?%s" % urlencode( { 'o' : i, 'ot' : ( 'desc' if ot == 'asc' else 'asc' ) if o == i else 'asc' } )),
+				'url' : mark_safe( "?%s" % urlencode( headerparams ) ),
 				'class_attrib' : mark_safe( 'class="sorted %s"' % ('ascending' if ot == 'asc' else 'descending' ) if o == i else ''),
 			} )
 			i += 1
@@ -285,6 +291,8 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 				'results_header' : results_header,
 				'params' : mark_safe( params ),
 				'search' : search,
+				'o' : o,
+				'ot' : ot,
 				'error' : error,
 				'objects' : objects,
 				'object_count' : len( qs ),
