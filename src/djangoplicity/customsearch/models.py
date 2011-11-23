@@ -474,9 +474,9 @@ class CustomSearchOrdering( models.Model ):
 		"""
 		if self.field.sort_selector or self.field.selector:
 			if self.descending:
-				qs = qs.annotate( **{ str('%s__max') % self.field.sort_field_name() : Max( self.field.sort_field_name() ) } )
+				qs = qs.annotate( **{ str('%s__max' % self.field.sort_field_name() ) : Max( self.field.sort_field_name() ) } )
 			else:
-				qs = qs.annotate( **{ str('%s__min') % self.field.sort_field_name() : Min( self.field.sort_field_name() ) } )
+				qs = qs.annotate( **{ str('%s__min' % self.field.sort_field_name() ) : Min( self.field.sort_field_name() ) } )
 		
 		return qs
 	
