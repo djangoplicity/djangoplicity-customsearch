@@ -34,7 +34,7 @@
 This custom search application allows admin users to create ad-hoc queries into
 nearly any django model, using a subset of the django queryset API. 
 
-An super user must intially specify the models and fields that can be search on. Once
+An super user must initially specify the models and fields that can be search on. Once
 that is done, any admin user can make queries as they like.
 
 The search results can either be browsed ( and search with freetext), exported or
@@ -461,7 +461,7 @@ class CustomSearchOrdering( models.Model ):
 		"""
 		sort_field = self.field.sort_field_name()
 		
-		if self.field.sort_selector or self.field.selector:
+		if self.field.sort_selector:
 			order_by = '-%s__max' % sort_field if self.descending else '%s__min' % sort_field
 		else:
 			order_by =  '-%s' % sort_field if self.descending else sort_field 
@@ -472,7 +472,7 @@ class CustomSearchOrdering( models.Model ):
 	def annotate_qs( self, qs ):
 		"""
 		"""
-		if self.field.sort_selector or self.field.selector:
+		if self.field.sort_selector:
 			if self.descending:
 				qs = qs.annotate( **{ str('%s__max' % self.field.sort_field_name() ) : Max( self.field.sort_field_name() ) } )
 			else:
