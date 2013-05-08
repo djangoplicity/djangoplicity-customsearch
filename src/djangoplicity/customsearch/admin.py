@@ -296,7 +296,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 				'error' : error,
 				'objects' : objects,
 				'object_count' : len( qs ),
-				'data_table' : search.layout.data_table( objects.object_list ),
+				'data_table' : search.layout.data_table( objects.object_list, quote_obj_pks=True ),
 				'messages': [],
 				'app_label' : search._meta.app_label,
 				'opts' : search._meta,

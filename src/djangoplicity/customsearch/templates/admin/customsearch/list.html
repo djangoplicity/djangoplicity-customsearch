@@ -89,7 +89,7 @@
 			<tbody>
 			{% for row in data_table %}
 			<tr class="{% cycle 'row1' 'row2' %}">
-			<td align="center"><a href="{% url reverse_name row.object.pk %}" class="changelink">&nbsp;</a></td>
+			<td align="center"><a href="{% url reverse_name row.object_pk %}" class="changelink">&nbsp;</a></td>
 			{% for value in row.values %}
 			<td>{{value}}</td>
 			{% endfor %}
