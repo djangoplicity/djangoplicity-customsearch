@@ -43,6 +43,7 @@ used for e.g. label generation if djangoplicity-contacts is installed.
 
 
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.admin.util import quote
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.aggregates import Max, Min
@@ -146,7 +147,7 @@ class CustomSearchLayout( models.Model ):
 			header += self._get_header_value( f.field, expand=f.expand_rel )
 		return header
 
-	def data_table( self, query_set ):
+	def data_table( self, query_set, quote_obj_pks=False ):
 		"""
 		"""
 		data = []
@@ -156,7 +157,7 @@ class CustomSearchLayout( models.Model ):
 			row = []
 			for f in layout_qs:
 				row += self._get_field_value( obj, f.field, expand=f.expand_rel )
-			data.append( { 'object' : obj, 'values' : row } )
+			data.append( { 'object' : obj, 'values' : row, 'object_pk' : quote(obj.pk) if quote_obj_pks else obj.pk} )
 		
 		return data
 
