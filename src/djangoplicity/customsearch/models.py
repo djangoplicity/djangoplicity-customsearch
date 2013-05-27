@@ -14,7 +14,7 @@
 #	  notice, this list of conditions and the following disclaimer in the
 #	  documentation and/or other materials provided with the distribution.
 #
-#	* Neither the name of the European Southern Observatory nor the names 
+#	* Neither the name of the European Southern Observatory nor the names
 #	  of its contributors may be used to endorse or promote products derived
 #	  from this software without specific prior written permission.
 #
@@ -32,7 +32,7 @@
 
 """
 This custom search application allows admin users to create ad-hoc queries into
-nearly any django model, using a subset of the django queryset API. 
+nearly any django model, using a subset of the django queryset API.
 
 An super user must initially specify the models and fields that can be search on. Once
 that is done, any admin user can make queries as they like.
@@ -48,10 +48,9 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.aggregates import Max, Min
 from django.db.models.related import RelatedObject
-from django.utils.translation import ugettext as _
 import operator
 
-MATCH_TYPE = ( 
+MATCH_TYPE = (
 	( '__exact', 'Exact' ),
 	( '__contains', 'Contains' ),
 	( '__startswith', 'Starts with' ),
@@ -72,9 +71,8 @@ MATCH_TYPE = (
 	( '__lte', 'Less than or equal to' ),
 	( '__isnull', 'Is null' ),
 )
-"""
-List of allowed field loookup types
-"""
+# List of allowed field loookup types
+
 
 class CustomSearchGroup( models.Model ):
 	"""
@@ -84,6 +82,7 @@ class CustomSearchGroup( models.Model ):
 
 	def __unicode__( self ):
 		return self.name
+
 
 class CustomSearchModel( models.Model ):
 	"""
@@ -98,7 +97,7 @@ class CustomSearchModel( models.Model ):
 
 class CustomSearchField( models.Model ):
 	"""
-	Define a field for a custom search model	
+	Define a field for a custom search model
 	"""
 	model = models.ForeignKey( CustomSearchModel )
 	name = models.CharField( max_length=255 )
@@ -107,17 +106,17 @@ class CustomSearchField( models.Model ):
 	sort_selector = models.SlugField( blank=True )
 	enable_layout = models.BooleanField( default=True )
 	enable_search = models.BooleanField( default=True )
-	enable_freetext = models.BooleanField( default=True ) 
+	enable_freetext = models.BooleanField( default=True )
 
 	def full_field_name( self ):
 		return str( "%s%s" % ( self.field_name, self.selector ) )
-	
+
 	def sort_field_name( self ):
 		return str( "%s%s" % ( self.field_name, self.sort_selector if self.sort_selector else self.selector ) )
-	
+
 	def get_modelclass_field( self ):
 		return self.model.model.model_class()._meta.get_field_by_name( self.field_name )
-	
+
 	def sortable( self ):
 		return True
 
@@ -127,7 +126,7 @@ class CustomSearchField( models.Model ):
 
 	def __unicode__( self ):
 		return "%s: %s" % ( self.model.name, self.name, )
-	
+
 	class Meta:
 		ordering = ['model__name', 'name']
 
@@ -157,23 +156,24 @@ class CustomSearchLayout( models.Model ):
 			row = []
 			for f in layout_qs:
 				row += self._get_field_value( obj, f.field, expand=f.expand_rel )
-			data.append( { 'object' : obj, 'values' : row, 'object_pk' : quote(obj.pk) if quote_obj_pks else obj.pk} )
-		
+			data.append( { 'object': obj, 'values': row, 'object_pk': quote(obj.pk) if quote_obj_pks else obj.pk} )
+
 		return data
 
 	def _get_field_value( self, obj, field, expand=False ):
 		modelcls = self.model.model.model_class()
 		( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
-		
+		print '*', field_object, m, direct, m2m, field.field_name, field.selector
+
 		# Get accessor value
 		accessor = field.field_name
 		if isinstance( field_object, RelatedObject ):
 			m2m = True
 			accessor = field_object.get_accessor_name()
-		
+
 		if m2m and expand:
 			rels = getattr( obj, accessor ).all()
-				
+
 			cols = []
 			for v in field_object.related.parent_model.objects.all():
 				if v in rels:
@@ -182,28 +182,26 @@ class CustomSearchLayout( models.Model ):
 					cols.append( "" )
 			return cols
 		elif m2m and not expand:
-			tmp = "\";\"".join( [unicode( x ).replace( '"', '""' ) for x in getattr( obj, accessor ).all()] )			
+			tmp = "\";\"".join( [unicode( x ).replace( '"', '""' ) for x in getattr( obj, accessor ).all()] )
 			return [ '"%s"' % tmp if tmp else "" ]
 		else:
-			return [getattr( obj, accessor )]
-			
-
+			result = getattr( obj, accessor )
+			if expand and field.selector.startswith('__'):
+				result = getattr( result, field.selector.split('__')[1] )
+			return [result]
 
 	def _get_header_value( self, field, expand=False ):
 		modelcls = self.model.model.model_class()
 		( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
-			
+
 		if m2m and expand:
 			if direct:
 				cols = []
 				for v in field_object.related.parent_model.objects.all():
-					cols.append( ( field, "%s: %s" % ( field.name, unicode( v ) ) , "%s:%s" % ( field.field_name, v.pk ) ) )
+					cols.append( ( field, "%s: %s" % ( field.name, unicode( v ) ), "%s:%s" % ( field.field_name, v.pk ) ) )
 				return cols
 		else:
 			return [( field, field.name, field.field_name )]
-		
-		
-	
 
 	def __unicode__( self ):
 		return "%s: %s" % ( self.model.name, self.name, )
@@ -211,7 +209,7 @@ class CustomSearchLayout( models.Model ):
 
 class CustomSearchLayoutField( models.Model ):
 	layout = models.ForeignKey( CustomSearchLayout )
-	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_layout' : True } )
+	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_layout': True } )
 	position = models.PositiveIntegerField( null=True, blank=True )
 	expand_rel = models.BooleanField( default=False )
 
@@ -220,11 +218,9 @@ class CustomSearchLayoutField( models.Model ):
 			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.layout.model.name ) )
 		if not self.field.enable_layout:
 			raise ValidationError( 'Field %s does not allow use in layout' % self.field )
-		
+
 	class Meta:
 		ordering = ['position', 'id']
-
-
 
 
 class CustomSearch( models.Model ):
@@ -242,24 +238,23 @@ class CustomSearch( models.Model ):
 			( "can_view", "Can view all custom searches" ),
 		]
 		ordering = ['name']
-		
+
 	def __unicode__( self ):
 		return self.name
-
 
 	def human_readable_text( self ):
 		"""
 		Make a human readable text describing this search.
 		"""
 		text = []
-		include,exclude = self._collect_search_conds()
+		include, exclude = self._collect_search_conds()
 		match_types = dict( MATCH_TYPE )
-		
-		for conditions,title in [( include, 'Include' ), ( exclude, 'Exclude' )]:
-			field_texts = [] 
+
+		for conditions, title in [( include, 'Include' ), ( exclude, 'Exclude' )]:
+			field_texts = []
 			for field, values in conditions.items():
 				field_title = field.name.lower()
-				
+
 				# Group values for each match type
 				field_match = {}
 				for match, val in values:
@@ -267,7 +262,7 @@ class CustomSearch( models.Model ):
 						field_match[match] = []
 					field_match[match].append(val)
 
-				match_texts = []				
+				match_texts = []
 				for match, values in field_match.items():
 					if match == '__exact':
 						match_title = "matches"
@@ -277,13 +272,13 @@ class CustomSearch( models.Model ):
 						match_title = "matches regular expression"
 					elif match == '__iregex':
 						match_title = "matches regular expression (case-insensitive)"
-					elif match in ['__year','__month','__day',"__week_day"]:
+					elif match in ['__year', '__month', '__day', "__week_day"]:
 						match_title = "%s is" % match_types[match].lower()
-					elif match in ['__gt','__gte','__lt',"__lte"]:
+					elif match in ['__gt', '__gte', '__lt', "__lte"]:
 						match_title = "is %s" % match_types[match].lower()
 					else:
 						match_title = match_types[match].lower()
-					
+
 					if match == "__isnull" and True in values:
 						match_texts.append( "is null" )
 					elif match == "__isnull" and False in values:
@@ -291,18 +286,15 @@ class CustomSearch( models.Model ):
 					else:
 						match_texts.append( "%s %s" % ( match_title, " or ".join( ['"%s"' % x for x in values] ) ) )
 				field_texts.append( "%s %s" % ( field_title, " or ".join( match_texts ) ) )
-			
 
 			if field_texts:
 				text.append("%s %s where %s." % ( title, self.model.model.model_class()._meta.verbose_name_plural.lower(), " and, ".join( field_texts ) ))
-				
+
 		ordering = self.customsearchordering_set.all()
 		if len(ordering) > 0:
 			text.append("Order result by %s." % ", ".join( [o.field.name.lower() for o in ordering] ) )
-		
-		return " ".join( text ) if text else "Include all %s." % self.model.model.model_class()._meta.verbose_name_plural.lower()		
-					
 
+		return " ".join( text ) if text else "Include all %s." % self.model.model.model_class()._meta.verbose_name_plural.lower()
 
 	def clean( self ):
 		"""
@@ -310,7 +302,6 @@ class CustomSearch( models.Model ):
 		"""
 		if self.model != self.layout.model:
 			raise ValidationError( 'Layout %s does not belong to %s' % ( self.layout, self.model.name ) )
-
 
 	def _collect_search_conds( self ):
 		include = {}
@@ -341,11 +332,11 @@ class CustomSearch( models.Model ):
 		exclude_queries = []
 
 		for field, values in include.items():
-			include_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )) : val } ) for ( match, val ) in values] ) )
+			include_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values] ) )
 
 		for field, values in exclude.items():
 			# Identical to include queries except that the Q object is negated with ~ and all qs are and'ed together
-			exclude_queries.append( reduce( operator.and_, [~models.Q( **{ str("%s%s" % ( field.full_field_name(), match )) : val } ) for ( match, val ) in values] ) )
+			exclude_queries.append( reduce( operator.and_, [~models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values] ) )
 
 		# Generate queryset for search.
 		modelclass = self.model.model.model_class()
@@ -358,33 +349,32 @@ class CustomSearch( models.Model ):
 			qobjects = []
 			for f in CustomSearchField.objects.filter( model=self.model, enable_freetext=True ):
 				arg = "%s__icontains" % f.full_field_name()
-				qobjects.append( models.Q( **{ str( arg ) : freetext } ) )
+				qobjects.append( models.Q( **{ str( arg ): freetext } ) )
 			qs = qs.filter( reduce( operator.or_, qobjects ) )
 		qs = qs.distinct()
-		
+
 		# Ordering
 		# ========
 		# NOTE: distinct() and order_by() does not work well together (https://docs.djangoproject.com/en/1.3/ref/models/querysets/#distinct).
-		# If you order by a related field (e.g. groups__name) then groups__name is included in the SELECT columns (e.g SELECT first_name, ..., contact_groups.name). 
+		# If you order by a related field (e.g. groups__name) then groups__name is included in the SELECT columns (e.g SELECT first_name, ..., contact_groups.name).
 		# This means that distinct() method (akak SELECT DISTINCT) will no longer be able to detect duplicate Contact objects
 		#
-		# The work around is to either annotate each Model object with the value you want to order by, or add an extra attribute 
-		# on the Model you want to order (see e.g. http://archlinux.me/dusty/2010/12/07/django-dont-use-distinct-and-order_by-across-relations/)       
+		# The work around is to either annotate each Model object with the value you want to order by, or add an extra attribute
+		# on the Model you want to order (see e.g. http://archlinux.me/dusty/2010/12/07/django-dont-use-distinct-and-order_by-across-relations/)
 		if override_ordering is None:
 			ordering = self.customsearchordering_set.all().select_related( 'field' )
 		else:
 			ordering = override_ordering
-			
+
 		if len( ordering ) > 0:
 			for o in ordering:
 				qs = o.annotate_qs( qs )
 			qs = qs.order_by( *[o.order_by_field() for o in ordering] )
-		
+
 		return qs
-	
+
 	def get_data_table( self ):
 		return self.layout.rows( self.get_query_set() )
-
 
 
 class CustomSearchCondition( models.Model ):
@@ -392,18 +382,18 @@ class CustomSearchCondition( models.Model ):
 	Represents one condition for a custom search. A condition can
 	either be an include or exclude condition. Basically, include
 	conditions are passed to the QuerySet filter() method, and exclude
-	statements are  passed to the QuyerSet exclude() method. Each 
+	statements are  passed to the QuyerSet exclude() method. Each
 	condition have the following matches:
 	"""
-	number_lookups = ['__year', '__month', '__day', '__weekday',]
-	boolean_lookups = ['__isnull',]
-	
+	number_lookups = ['__year', '__month', '__day', '__weekday', ]
+	boolean_lookups = ['__isnull', ]
+
 	search = models.ForeignKey( CustomSearch )
 	exclude = models.BooleanField( default=False )
-	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search' : True } )
+	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search': True } )
 	match = models.CharField( max_length=30, choices=MATCH_TYPE )
 	value = models.CharField( max_length=255, blank=True )
-	
+
 	def prepared_value( self ):
 		"""
 		Prepare value from string representation.
@@ -422,7 +412,7 @@ class CustomSearchCondition( models.Model ):
 				raise ValidationError("Value is not a truth value.")
 		else:
 			return self.value
-			
+
 	def check_value( self ):
 		"""
 		Check if value is valid for the given match type.
@@ -444,52 +434,48 @@ class CustomSearchCondition( models.Model ):
 
 		if self.field.model != self.search.model:
 			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.search.model.name ) )
-		
+
 		if not self.field.enable_search:
 			raise ValidationError( 'Field %s does not allow searching' % self.field )
-		
+
 
 class CustomSearchOrdering( models.Model ):
 	"""
 	Allow ordering of fields
 	"""
 	search = models.ForeignKey( CustomSearch )
-	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search' : True } )
+	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search': True } )
 	descending = models.BooleanField( default=False )
-	
+
 	def order_by_field( self ):
 		"""
 		"""
 		sort_field = self.field.sort_field_name()
-		
+
 		if self.field.sort_selector:
 			order_by = '-%s__max' % sort_field if self.descending else '%s__min' % sort_field
 		else:
-			order_by =  '-%s' % sort_field if self.descending else sort_field 
-		
+			order_by = '-%s' % sort_field if self.descending else sort_field
+
 		return order_by
 
-	
 	def annotate_qs( self, qs ):
 		"""
 		"""
 		if self.field.sort_selector:
 			if self.descending:
-				qs = qs.annotate( **{ str('%s__max' % self.field.sort_field_name() ) : Max( self.field.sort_field_name() ) } )
+				qs = qs.annotate( **{ str('%s__max' % self.field.sort_field_name() ): Max( self.field.sort_field_name() ) } )
 			else:
-				qs = qs.annotate( **{ str('%s__min' % self.field.sort_field_name() ) : Min( self.field.sort_field_name() ) } )
-		
+				qs = qs.annotate( **{ str('%s__min' % self.field.sort_field_name() ): Min( self.field.sort_field_name() ) } )
+
 		return qs
-	
+
 	def clean( self ):
 		"""
 		Ensure the field model matches the search model.
 		"""
 		if self.field.model != self.search.model:
 			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.search.model.name ) )
-		
+
 		if not self.field.enable_search:
 			raise ValidationError( 'Field %s does not allow ordering' % self.field )
-
-
-
