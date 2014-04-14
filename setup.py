@@ -41,11 +41,7 @@ setup(
 	include_package_data = True,
 	zip_safe = False,
 	namespace_packages = ['djangoplicity'],
-	#entry_points = {
-	#	'console_scripts': [
-	#			'somescriptname = djangoplicity.customsearch.script:main',
-	#		],		
-	#	},
+    install_requires = ['setuptools'],
 	
 	# metadata for upload to PyPI
 	author = 'European Southern Observatory',
