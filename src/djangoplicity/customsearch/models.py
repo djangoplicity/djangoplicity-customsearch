@@ -163,7 +163,6 @@ class CustomSearchLayout( models.Model ):
 	def _get_field_value( self, obj, field, expand=False ):
 		modelcls = self.model.model.model_class()
 		( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
-		print '*', field_object, m, direct, m2m, field.field_name, field.selector
 
 		# Get accessor value
 		accessor = field.field_name
