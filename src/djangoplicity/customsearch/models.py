@@ -48,6 +48,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.aggregates import Max, Min
 from django.db.models.related import RelatedObject
+from datetime import datetime
 import operator
 
 MATCH_TYPE = (
@@ -70,6 +71,8 @@ MATCH_TYPE = (
 	( '__lt', 'Less than' ),
 	( '__lte', 'Less than or equal to' ),
 	( '__isnull', 'Is null' ),
+	( '__gt', 'After' ),
+	( '__lte', 'Before' ),
 )
 # List of allowed field loookup types
 
@@ -386,6 +389,7 @@ class CustomSearchCondition( models.Model ):
 	"""
 	number_lookups = ['__year', '__month', '__day', '__weekday', ]
 	boolean_lookups = ['__isnull', ]
+	date_lookups = ['__gt', '__lte']
 
 	search = models.ForeignKey( CustomSearch )
 	exclude = models.BooleanField( default=False )
@@ -397,6 +401,8 @@ class CustomSearchCondition( models.Model ):
 		"""
 		Prepare value from string representation.
 		"""
+		if self.match in self.date_lookups and self.value == 'now()':
+			return datetime.now()
 		if self.match in self.number_lookups:
 			try:
 				return int( self.value )
