@@ -1,6 +1,5 @@
 {% extends "admin/base_site.html" %}
 {% load admin_list i18n %}
-{% load url from future %}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -89,7 +88,7 @@
 			<tbody>
 			{% for row in data_table %}
 			<tr class="{% cycle 'row1' 'row2' %}">
-			<td align="center"><a href="{% url 'reverse_name' row.object_pk %}" class="changelink">&nbsp;</a></td>
+			<td align="center"><a href="{% url reverse_name row.object_pk %}" class="changelink">&nbsp;</a></td>
 			{% for value in row.values %}
 			<td>{{value}}</td>
 			{% endfor %}
