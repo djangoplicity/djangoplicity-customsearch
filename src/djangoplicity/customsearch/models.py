@@ -322,6 +322,42 @@ class CustomSearch( models.Model ):
 		modelclass = self.model.model.model_class()
 		return modelclass.objects.none()
 
+	def get_results_query_set( self, searchval=None, ordering=None, ordering_direction=None, evaluate=True ):
+		"""
+		Get the queryset for the selected custom search.
+		"""
+		header = self.layout.header()
+
+		search_ordering = None
+
+		try:
+			if ordering_direction not in ['asc', 'desc']:
+				ordering_direction = 'asc'
+
+			ordering = int( ordering )
+			if ordering <= 0:
+				raise ValueError
+			( field, name, field_name ) = header[ordering - 1]
+			if field.sortable():
+				search_ordering = [ CustomSearchOrdering( field=field, descending=( ordering_direction == 'desc' ) ) ]
+		except ( ValueError, IndexError, TypeError ):
+			ordering = None
+			ordering_direction = None
+
+		qs = self.get_query_set( freetext=searchval, override_ordering=search_ordering )
+
+		if evaluate:
+			try:
+				qs.count()
+				error = ""
+			except Exception, e:
+				error = unicode( e )
+				qs = self.get_empty_query_set()
+		else:
+			error = ""
+
+		return ( self, qs, searchval, error, header, ordering, ordering_direction )
+
 	def get_query_set( self, freetext=None, override_ordering=None ):
 		"""
 		Execute the custom search
