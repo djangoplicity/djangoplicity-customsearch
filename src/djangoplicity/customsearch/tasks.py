@@ -54,13 +54,13 @@ def export_search(search_id, email, searchval=None, ordering=None, ordering_dire
 			ordering_direction=ordering_direction)
 
 	exporter = ExcelExporter(f, header=[ (x[1], None) for x in header ])
+
+	for row in search.layout.data_table(qs):
+		exporter.writerow(row['values'])
 	exporter.save(f)
 	f.close()
 
 	# Send the export file as attachment
-	for row in search.layout.data_table(qs):
-		exporter.writerow(row['values'])
-
 	email = EmailMessage('Custom Search export ready: "%s"' % search.name,
 				'', 'no-reply@eso.org', [email])
 	email.attach_file(f.name)
