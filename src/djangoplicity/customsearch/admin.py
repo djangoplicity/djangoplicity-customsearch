@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # djangoplicity-customsearch
-# Copyright (c) 2007-2011, European Southern Observatory (ESO)
+# Copyright (c) 2007-2014, European Southern Observatory (ESO)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,25 +28,21 @@
 # IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE
-#
 
-from django import forms
-from django.conf.urls.defaults import patterns
+from django.conf.urls import patterns
 from django.contrib import admin
-from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
-from django.utils.encoding import smart_unicode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
 from djangoplicity.admincomments.admin import AdminCommentInline, \
 	AdminCommentMixin
 from djangoplicity.customsearch.models import CustomSearch, \
 	CustomSearchCondition, CustomSearchField, CustomSearchModel, CustomSearchGroup, \
 	CustomSearchLayout, CustomSearchLayoutField, CustomSearchOrdering
+from djangoplicity.customsearch.tasks import export_search
 from django.db import DatabaseError
 
 try:
@@ -54,12 +50,6 @@ try:
 	has_labels = True
 except ( ImportError, DatabaseError ):
 	has_labels = False
-
-try:
-	from djangoplicity.contacts.exporter import ExcelExporter
-	has_exporter = True
-except ( ImportError, DatabaseError ):
-	has_exporter = False
 
 
 class CustomSearchFieldInlineAdmin( admin.TabularInline ):
@@ -149,63 +139,23 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 		)
 		return extra_urls + urls
 
-	def get_results_query_set( self, request, pk, evaluate=True ):
-		"""
-		Get the queryset for the selected custom search.
-		"""
-		search = get_object_or_404( CustomSearch, pk=pk )
-		header = search.layout.header()
-
-		# Search
+	def _get_search_params_from_request( self, request ):
+		'''
+		Return the search string and ordering from request if any
+		'''
 		searchval = request.GET.get( "s", None )
-
-		# Ordering
-		search_ordering = None
-
-		try:
-			ordering = request.GET.get( "o", None )
-			ordering_direction = request.GET.get( "ot", None )
-
-			if ordering_direction not in ['asc', 'desc']:
-				ordering_direction = 'asc'
-
-			ordering = int( ordering )
-			if ordering <= 0:
-				raise ValueError
-			( field, name, field_name ) = header[ordering - 1]
-			if field.sortable():
-				search_ordering = [ CustomSearchOrdering( field=field, descending=( ordering_direction == 'desc' ) ) ]
-		except ( ValueError, IndexError, TypeError ):
-			ordering = None
-			ordering_direction = None
-
-		qs = search.get_query_set( freetext=searchval, override_ordering=search_ordering )
-
-		if evaluate:
-			try:
-				qs.count()
-				error = ""
-			except Exception, e:
-				error = unicode( e )
-				qs = search.get_empty_query_set()
-		else:
-			error = ""
-
-		return ( search, qs, searchval, error, header, ordering, ordering_direction )
+		ordering = request.GET.get( "o", None )
+		ordering_direction = request.GET.get( "ot", None )
+		return (searchval, ordering, ordering_direction)
 
 	def export_view( self, request, pk=None ):
-		( search, qs, searchval, error, header, o, ot ) = self.get_results_query_set( request, pk )
+		search = get_object_or_404( CustomSearch, pk=pk )
+		s, o, ot = self._get_search_params_from_request( request )
+		( search, qs, searchval, error, header, o, ot ) = search.get_results_query_set( searchval=s, ordering=o, ordering_direction=ot )
 
-		exporter = ExcelExporter( header=[ ( x[1], None ) for x in header ] )
+		export_search.delay(pk, request.user.email, s, o, ot)
 
-		for row in search.layout.data_table( qs ):
-			exporter.writerow( row['values'] )
-
-		response = HttpResponse( mimetype=exporter.mimetype )
-		response['Content-Disposition'] = 'attachment; filename=%s.xls' % slugify( search.name )
-		exporter.save( response )
-
-		return response
+		return render_to_response('admin/customsearch/export.html', {'search': search, 'email': request.user.email})
 
 	def labels_view( self, request, pk=None ):
 		"""
@@ -215,7 +165,9 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 			return HttpResponse( "Labels generation support not available." )
 
 		# Get queryset
-		( search, qs, searchval, error, header, o, ot ) = self.get_results_query_set( request, pk )
+		search = get_object_or_404( CustomSearch, pk=pk )
+		s, o, ot = self._get_search_params_from_request( request )
+		( search, qs, searchval, error, header, o, ot ) = search.get_results_query_set( searchval=s, ordering=o, ordering_direction=ot )
 
 		# Get label
 		try:
@@ -246,7 +198,9 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 		"""
 		Perform search
 		"""
-		( search, qs, searchval, error, header, o, ot ) = self.get_results_query_set( request, pk, evaluate=False )
+		search = get_object_or_404( CustomSearch, pk=pk )
+		s, o, ot = self._get_search_params_from_request( request )
+		( search, qs, searchval, error, header, o, ot ) = search.get_results_query_set( searchval=s, ordering=o, ordering_direction=ot )
 
 		# Get page num
 		try:

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # djangoplicity-customsearch
-# Copyright (c) 2007-2011, European Southern Observatory (ESO)
+# Copyright (c) 2007-2014, European Southern Observatory (ESO)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
 #      notice, this list of conditions and the following disclaimer in the
 #      documentation and/or other materials provided with the distribution.
 #
-#    * Neither the name of the European Southern Observatory nor the names 
+#    * Neither the name of the European Southern Observatory nor the names
 #      of its contributors may be used to endorse or promote products derived
 #      from this software without specific prior written permission.
 #
@@ -28,7 +28,43 @@
 # IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE
-#
-include *.txt
-recursive-include docs *
-recursive-include src/djangoplicity/customsearch/templates *
+
+from djangoplicity.customsearch.exporter import ExcelExporter
+from djangoplicity.customsearch.models import CustomSearch
+
+from celery.task import task
+from django.core.mail import EmailMessage
+from tempfile import NamedTemporaryFile
+import os
+
+
+@task
+def export_search(search_id, email, searchval=None, ordering=None, ordering_direction=None):
+	'''
+	Export a given search to file and email to the given address
+	'''
+	search = CustomSearch.objects.get(pk=search_id)
+
+	# Generate a temporary file
+	f = NamedTemporaryFile(prefix=search.name + '-', suffix='.xls', delete=False)
+
+	(search, qs, searchval, error, header, o, ot) = search.get_results_query_set(
+			searchval=searchval,
+			ordering=ordering,
+			ordering_direction=ordering_direction)
+
+	exporter = ExcelExporter(f, header=[ (x[1], None) for x in header ])
+
+	for row in search.layout.data_table(qs):
+		exporter.writerow(row['values'])
+	exporter.save(f)
+	f.close()
+
+	# Send the export file as attachment
+	email = EmailMessage('Custom Search export ready: "%s"' % search.name,
+				'', 'no-reply@eso.org', [email])
+	email.attach_file(f.name)
+	email.send()
+
+	# Remove the temporary file
+	os.remove(f.name)

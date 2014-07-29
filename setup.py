@@ -30,10 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE
 #
 
-# Using distribute instead of setuptools
-import distribute_setup
-distribute_setup.use_setuptools()
-
 import os
 from setuptools import setup, find_packages
 
@@ -45,11 +41,7 @@ setup(
 	include_package_data = True,
 	zip_safe = False,
 	namespace_packages = ['djangoplicity'],
-	#entry_points = {
-	#	'console_scripts': [
-	#			'somescriptname = djangoplicity.customsearch.script:main',
-	#		],		
-	#	},
+    install_requires = ['setuptools'],
 	
 	# metadata for upload to PyPI
 	author = 'European Southern Observatory',
