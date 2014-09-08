@@ -47,6 +47,7 @@ from django.contrib.admin.util import quote
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.aggregates import Max, Min
+from django.db.models.fields import FieldDoesNotExist
 from django.db.models.related import RelatedObject
 from datetime import datetime
 import operator
@@ -165,7 +166,11 @@ class CustomSearchLayout( models.Model ):
 
 	def _get_field_value( self, obj, field, expand=False ):
 		modelcls = self.model.model.model_class()
-		( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
+		try:
+			( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
+		except FieldDoesNotExist:
+			# The field is most likely a property()
+			return [getattr(obj, field.field_name)]
 
 		# Get accessor value
 		accessor = field.field_name
@@ -194,7 +199,11 @@ class CustomSearchLayout( models.Model ):
 
 	def _get_header_value( self, field, expand=False ):
 		modelcls = self.model.model.model_class()
-		( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
+		try:
+			( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
+		except FieldDoesNotExist:
+			# The field is most likely a property()
+			return [(field, field.name, field.field_name)]
 
 		if m2m and expand:
 			if direct:
