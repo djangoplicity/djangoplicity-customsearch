@@ -45,8 +45,11 @@ def export_search(search_id, email, searchval=None, ordering=None, ordering_dire
 	'''
 	search = CustomSearch.objects.get(pk=search_id)
 
+	# Rename the / from the search name if any
+	prefix = search.name.replace('/', '-')
+
 	# Generate a temporary file
-	f = NamedTemporaryFile(prefix=search.name + '-', suffix='.xls', delete=False)
+	f = NamedTemporaryFile(prefix=prefix + '-', suffix='.xls', delete=False)
 
 	(search, qs, searchval, error, header, o, ot) = search.get_results_query_set(
 			searchval=searchval,
