@@ -353,7 +353,7 @@ class CustomSearch( models.Model ):
 			ordering = None
 			ordering_direction = None
 
-		qs = self.get_query_set( freetext=searchval, override_ordering=search_ordering )
+		qs = self.get_queryset( freetext=searchval, override_ordering=search_ordering )
 
 		if evaluate:
 			try:
@@ -367,7 +367,7 @@ class CustomSearch( models.Model ):
 
 		return ( self, qs, searchval, error, header, ordering, ordering_direction )
 
-	def get_query_set( self, freetext=None, override_ordering=None ):
+	def get_queryset( self, freetext=None, override_ordering=None ):
 		"""
 		Execute the custom search
 		"""
@@ -421,7 +421,7 @@ class CustomSearch( models.Model ):
 		return qs
 
 	def get_data_table( self ):
-		return self.layout.rows( self.get_query_set() )
+		return self.layout.rows( self.get_queryset() )
 
 
 class CustomSearchCondition( models.Model ):
