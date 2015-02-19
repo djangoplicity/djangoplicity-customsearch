@@ -150,13 +150,13 @@ class CustomSearchLayout( models.Model ):
 			header += self._get_header_value( f.field, expand=f.expand_rel )
 		return header
 
-	def data_table( self, query_set, quote_obj_pks=False ):
+	def data_table( self, queryset, quote_obj_pks=False ):
 		"""
 		"""
 		data = []
 		layout_qs = CustomSearchLayoutField.objects.filter( layout=self ).select_related()
 
-		for obj in query_set:
+		for obj in queryset:
 			row = []
 			for f in layout_qs:
 				row += self._get_field_value( obj, f.field, expand=f.expand_rel )
@@ -327,11 +327,11 @@ class CustomSearch( models.Model ):
 
 		return ( include, exclude )
 
-	def get_empty_query_set( self ):
+	def get_empty_queryset( self ):
 		modelclass = self.model.model.model_class()
 		return modelclass.objects.none()
 
-	def get_results_query_set( self, searchval=None, ordering=None, ordering_direction=None, evaluate=True ):
+	def get_results_queryset( self, searchval=None, ordering=None, ordering_direction=None, evaluate=True ):
 		"""
 		Get the queryset for the selected custom search.
 		"""
@@ -361,7 +361,7 @@ class CustomSearch( models.Model ):
 				error = ""
 			except Exception, e:
 				error = unicode( e )
-				qs = self.get_empty_query_set()
+				qs = self.get_empty_queryset()
 		else:
 			error = ""
 
