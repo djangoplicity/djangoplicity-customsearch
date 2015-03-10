@@ -388,9 +388,18 @@ class CustomSearch( models.Model ):
 		modelclass = self.model.model.model_class()
 		qs = modelclass.objects.all()
 		if include_queries:
-			qs = qs.filter( *( include_queries ) )
+			#  include queries are ANDed together, unless a same criterium is
+			#  repeated in which case the criterium value are ORed, e.g.:
+			#    contacts__country=Germany, contacts__group=Messenger, contacts_group=epodpress
+			#  would result in:
+			#    contacts__country=Germany AND (contacts__group=Messenger OR contact_groups=epodpress)
+			qs = qs.filter( *include_queries )
 		if exclude_queries:
-			qs = qs.exclude( *(  exclude_queries ) )
+			# exclude queries are ORed togethere, e.g.:
+			#   contacts__city='', contacts__group=Messenger, contacts_group=epodpress
+			# would result in:
+			#   contacts__city='' OR contacts__group=Messenger OR contacts_group=epodpress
+			qs = qs.exclude( reduce( operator.or_, exclude_queries ) )
 
 		# Free text search in result set
 		if freetext:
