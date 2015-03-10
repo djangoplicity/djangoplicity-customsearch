@@ -51,7 +51,7 @@ def export_search(search_id, email, searchval=None, ordering=None, ordering_dire
 	# Generate a temporary file
 	f = NamedTemporaryFile(prefix=prefix + '-', suffix='.xls', delete=False)
 
-	(search, qs, searchval, error, header, o, ot) = search.get_results_queryset(
+	(search, qs, searchval, _error, header, _o, _ot) = search.get_results_queryset(
 			searchval=searchval,
 			ordering=ordering,
 			ordering_direction=ordering_direction)

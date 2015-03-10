@@ -167,7 +167,7 @@ class CustomSearchLayout( models.Model ):
 	def _get_field_value( self, obj, field, expand=False ):
 		modelcls = self.model.model.model_class()
 		try:
-			( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
+			( field_object, _m, _direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
 		except FieldDoesNotExist:
 			# The field is most likely a property()
 			return [getattr(obj, field.field_name)]
@@ -200,7 +200,7 @@ class CustomSearchLayout( models.Model ):
 	def _get_header_value( self, field, expand=False ):
 		modelcls = self.model.model.model_class()
 		try:
-			( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
+			( field_object, _m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
 		except FieldDoesNotExist:
 			# The field is most likely a property()
 			return [(field, field.name, field.field_name)]
@@ -346,7 +346,7 @@ class CustomSearch( models.Model ):
 			ordering = int( ordering )
 			if ordering <= 0:
 				raise ValueError
-			( field, name, field_name ) = header[ordering - 1]
+			( field, _name, _field_name ) = header[ordering - 1]
 			if field.sortable():
 				search_ordering = [ CustomSearchOrdering( field=field, descending=( ordering_direction == 'desc' ) ) ]
 		except ( ValueError, IndexError, TypeError ):
@@ -382,14 +382,15 @@ class CustomSearch( models.Model ):
 			include_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values] ) )
 
 		for field, values in exclude.items():
-			# Identical to include queries except that the Q object is negated with ~ and all qs are and'ed together
-			exclude_queries.append( reduce( operator.and_, [~models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values] ) )
+			exclude_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values] ) )
 
 		# Generate queryset for search.
 		modelclass = self.model.model.model_class()
 		qs = modelclass.objects.all()
-		if include_queries or exclude_queries:
-			qs = qs.filter( *( include_queries + exclude_queries ) )
+		if include_queries:
+			qs = qs.filter( *( include_queries ) )
+		if exclude_queries:
+			qs = qs.exclude( *(  exclude_queries ) )
 
 		# Free text search in result set
 		if freetext:
