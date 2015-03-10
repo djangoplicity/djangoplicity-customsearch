@@ -299,7 +299,10 @@ class CustomSearch( models.Model ):
 				field_texts.append( "%s %s" % ( field_title, " or ".join( match_texts ) ) )
 
 			if field_texts:
-				text.append("%s %s where %s." % ( title, self.model.model.model_class()._meta.verbose_name_plural.lower(), " and, ".join( field_texts ) ))
+				if title == 'Include':
+					text.append("%s %s where %s." % ( title, self.model.model.model_class()._meta.verbose_name_plural.lower(), " and, ".join( field_texts ) ))
+				else:
+					text.append("%s %s where %s." % ( title, self.model.model.model_class()._meta.verbose_name_plural.lower(), " or, ".join( field_texts ) ))
 
 		ordering = self.customsearchordering_set.all()
 		if len(ordering) > 0:
