@@ -151,7 +151,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 	def export_view( self, request, pk=None ):
 		search = get_object_or_404( CustomSearch, pk=pk )
 		s, o, ot = self._get_search_params_from_request( request )
-		( search, qs, searchval, error, header, o, ot ) = search.get_results_query_set( searchval=s, ordering=o, ordering_direction=ot )
+		( search, _qs, _searchval, _error, _header, o, ot ) = search.get_results_queryset( searchval=s, ordering=o, ordering_direction=ot )
 
 		export_search.delay(pk, request.user.email, s, o, ot)
 
@@ -167,7 +167,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 		# Get queryset
 		search = get_object_or_404( CustomSearch, pk=pk )
 		s, o, ot = self._get_search_params_from_request( request )
-		( search, qs, searchval, error, header, o, ot ) = search.get_results_query_set( searchval=s, ordering=o, ordering_direction=ot )
+		( search, qs, searchval, error, _header, o, ot ) = search.get_results_queryset( searchval=s, ordering=o, ordering_direction=ot )
 
 		# Get label
 		try:
@@ -200,7 +200,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 		"""
 		search = get_object_or_404( CustomSearch, pk=pk )
 		s, o, ot = self._get_search_params_from_request( request )
-		( search, qs, searchval, error, header, o, ot ) = search.get_results_query_set( searchval=s, ordering=o, ordering_direction=ot )
+		( search, qs, searchval, error, header, o, ot ) = search.get_results_queryset( searchval=s, ordering=o, ordering_direction=ot )
 
 		# Get page num
 		try:
@@ -218,7 +218,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 				objects = paginator.page( paginator.num_pages )
 		except Exception, e:
 			error = unicode( e )
-			qs = search.get_empty_query_set()
+			qs = search.get_empty_queryset()
 			paginator = Paginator( qs, 100 )
 			objects = paginator.page( 1 )
 

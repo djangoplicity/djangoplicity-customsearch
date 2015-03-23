@@ -62,7 +62,7 @@
       {% block search %}
 		<div id="toolbar"><form id="changelist-search" action="" method="get">
 		<div><!-- DIV needed for valid HTML -->
-		<label for="searchbar"><img src="{{STATIC_URL}}admin/img/admin/icon_searchbox.png" alt="Search" /></label>
+		<label for="searchbar"><img src="{{STATIC_URL}}admin/img/icon_searchbox.png" alt="Search" /></label>
 		<input type="text" size="40" name="s" value="{{ searchval|escape }}" id="searchbar" />
 		{% if o %}<input type="hidden" size="40" name="o" value="{{ o|escape }}" id="searchbar" />{% endif %}
 		{% if ot %}<input type="hidden" size="40" name="ot" value="{{ ot|escape }}" id="searchbar" />{% endif %}

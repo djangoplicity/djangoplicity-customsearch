@@ -150,13 +150,13 @@ class CustomSearchLayout( models.Model ):
 			header += self._get_header_value( f.field, expand=f.expand_rel )
 		return header
 
-	def data_table( self, query_set, quote_obj_pks=False ):
+	def data_table( self, queryset, quote_obj_pks=False ):
 		"""
 		"""
 		data = []
 		layout_qs = CustomSearchLayoutField.objects.filter( layout=self ).select_related()
 
-		for obj in query_set:
+		for obj in queryset:
 			row = []
 			for f in layout_qs:
 				row += self._get_field_value( obj, f.field, expand=f.expand_rel )
@@ -167,7 +167,7 @@ class CustomSearchLayout( models.Model ):
 	def _get_field_value( self, obj, field, expand=False ):
 		modelcls = self.model.model.model_class()
 		try:
-			( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
+			( field_object, _m, _direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
 		except FieldDoesNotExist:
 			# The field is most likely a property()
 			return [getattr(obj, field.field_name)]
@@ -200,7 +200,7 @@ class CustomSearchLayout( models.Model ):
 	def _get_header_value( self, field, expand=False ):
 		modelcls = self.model.model.model_class()
 		try:
-			( field_object, m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
+			( field_object, _m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
 		except FieldDoesNotExist:
 			# The field is most likely a property()
 			return [(field, field.name, field.field_name)]
@@ -299,7 +299,10 @@ class CustomSearch( models.Model ):
 				field_texts.append( "%s %s" % ( field_title, " or ".join( match_texts ) ) )
 
 			if field_texts:
-				text.append("%s %s where %s." % ( title, self.model.model.model_class()._meta.verbose_name_plural.lower(), " and, ".join( field_texts ) ))
+				if title == 'Include':
+					text.append("%s %s where %s." % ( title, self.model.model.model_class()._meta.verbose_name_plural.lower(), " and, ".join( field_texts ) ))
+				else:
+					text.append("%s %s where %s." % ( title, self.model.model.model_class()._meta.verbose_name_plural.lower(), " or, ".join( field_texts ) ))
 
 		ordering = self.customsearchordering_set.all()
 		if len(ordering) > 0:
@@ -327,11 +330,11 @@ class CustomSearch( models.Model ):
 
 		return ( include, exclude )
 
-	def get_empty_query_set( self ):
+	def get_empty_queryset( self ):
 		modelclass = self.model.model.model_class()
 		return modelclass.objects.none()
 
-	def get_results_query_set( self, searchval=None, ordering=None, ordering_direction=None, evaluate=True ):
+	def get_results_queryset( self, searchval=None, ordering=None, ordering_direction=None, evaluate=True ):
 		"""
 		Get the queryset for the selected custom search.
 		"""
@@ -346,14 +349,14 @@ class CustomSearch( models.Model ):
 			ordering = int( ordering )
 			if ordering <= 0:
 				raise ValueError
-			( field, name, field_name ) = header[ordering - 1]
+			( field, _name, _field_name ) = header[ordering - 1]
 			if field.sortable():
 				search_ordering = [ CustomSearchOrdering( field=field, descending=( ordering_direction == 'desc' ) ) ]
 		except ( ValueError, IndexError, TypeError ):
 			ordering = None
 			ordering_direction = None
 
-		qs = self.get_query_set( freetext=searchval, override_ordering=search_ordering )
+		qs = self.get_queryset( freetext=searchval, override_ordering=search_ordering )
 
 		if evaluate:
 			try:
@@ -361,13 +364,13 @@ class CustomSearch( models.Model ):
 				error = ""
 			except Exception, e:
 				error = unicode( e )
-				qs = self.get_empty_query_set()
+				qs = self.get_empty_queryset()
 		else:
 			error = ""
 
 		return ( self, qs, searchval, error, header, ordering, ordering_direction )
 
-	def get_query_set( self, freetext=None, override_ordering=None ):
+	def get_queryset( self, freetext=None, override_ordering=None ):
 		"""
 		Execute the custom search
 		"""
@@ -382,14 +385,24 @@ class CustomSearch( models.Model ):
 			include_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values] ) )
 
 		for field, values in exclude.items():
-			# Identical to include queries except that the Q object is negated with ~ and all qs are and'ed together
-			exclude_queries.append( reduce( operator.and_, [~models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values] ) )
+			exclude_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values] ) )
 
 		# Generate queryset for search.
 		modelclass = self.model.model.model_class()
 		qs = modelclass.objects.all()
-		if include_queries or exclude_queries:
-			qs = qs.filter( *( include_queries + exclude_queries ) )
+		if include_queries:
+			#  include queries are ANDed together, unless a same criterium is
+			#  repeated in which case the criterium value are ORed, e.g.:
+			#    contacts__country=Germany, contacts__group=Messenger, contacts_group=epodpress
+			#  would result in:
+			#    contacts__country=Germany AND (contacts__group=Messenger OR contact_groups=epodpress)
+			qs = qs.filter( *include_queries )
+		if exclude_queries:
+			# exclude queries are ORed togethere, e.g.:
+			#   contacts__city='', contacts__group=Messenger, contacts_group=epodpress
+			# would result in:
+			#   contacts__city='' OR contacts__group=Messenger OR contacts_group=epodpress
+			qs = qs.exclude( reduce( operator.or_, exclude_queries ) )
 
 		# Free text search in result set
 		if freetext:
@@ -421,7 +434,7 @@ class CustomSearch( models.Model ):
 		return qs
 
 	def get_data_table( self ):
-		return self.layout.rows( self.get_query_set() )
+		return self.layout.rows( self.get_queryset() )
 
 
 class CustomSearchCondition( models.Model ):
