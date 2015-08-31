@@ -495,11 +495,12 @@ class CustomSearchCondition( models.Model ):
 		"""
 		self.check_value()
 
-		if self.field.model != self.search.model:
-			raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.search.model.name ) )
+		if self.field_id:
+			if self.field.model != self.search.model:
+				raise ValidationError( 'Field %s does not belong to %s' % ( self.field, self.search.model.name ) )
 
-		if not self.field.enable_search:
-			raise ValidationError( 'Field %s does not allow searching' % self.field )
+			if not self.field.enable_search:
+				raise ValidationError( 'Field %s does not allow searching' % self.field )
 
 
 class CustomSearchOrdering( models.Model ):
