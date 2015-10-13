@@ -260,7 +260,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 				'messages': [],
 				'app_label': search._meta.app_label,
 				'opts': search._meta,
-				'reverse_name': "admin:%s_%s_change" % ( qs.model._meta.app_label, qs.model._meta.module_name ),
+				'reverse_name': "admin:%s_%s_change" % ( qs.model._meta.app_label, qs.model._meta.model_name ),
 				'searchval': searchval if searchval is not None else "",
 				'has_labels': has_labels,
 			},
