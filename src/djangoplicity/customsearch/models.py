@@ -48,7 +48,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.aggregates import Max, Min
 from django.db.models.fields import FieldDoesNotExist
-from django.db.models.related import RelatedObject
+from django.db.models.fields.related import ForeignObjectRel
+
 from datetime import datetime
 import operator
 
@@ -174,7 +175,7 @@ class CustomSearchLayout( models.Model ):
 
 		# Get accessor value
 		accessor = field.field_name
-		if isinstance( field_object, RelatedObject ):
+		if isinstance( field_object, ForeignObjectRel ):
 			m2m = True
 			accessor = field_object.get_accessor_name()
 
