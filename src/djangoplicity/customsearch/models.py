@@ -314,7 +314,7 @@ class CustomSearch( models.Model ):
 		"""
 		Ensure the layout model matches the search model.
 		"""
-		if self.model != self.layout.model:
+		if self.model_id and self.layout_id and self.model != self.layout.model:
 			raise ValidationError( 'Layout %s does not belong to %s' % ( self.layout, self.model.name ) )
 
 	def _collect_search_conds( self ):
