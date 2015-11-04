@@ -42,7 +42,7 @@ setup(
 	namespace_packages=['djangoplicity'],
     install_requires=[
 		'setuptools',
-		'xlwt == 1.0.0',
+		'xlwt',
 	],
 
 	# metadata for upload to PyPI
