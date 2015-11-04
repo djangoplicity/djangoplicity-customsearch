@@ -183,7 +183,7 @@ class CustomSearchLayout( models.Model ):
 			rels = getattr( obj, accessor ).all()
 
 			cols = []
-			for v in field_object.related.parent_model.objects.all():
+			for v in field_object.related.model.objects.all():
 				if v in rels:
 					cols.append( "X" )
 				else:
@@ -209,7 +209,7 @@ class CustomSearchLayout( models.Model ):
 		if m2m and expand:
 			if direct:
 				cols = []
-				for v in field_object.related.parent_model.objects.all():
+				for v in field_object.related.model.objects.all():
 					cols.append( ( field, "%s: %s" % ( field.name, unicode( v ) ), "%s:%s" % ( field.field_name, v.pk ) ) )
 				return cols
 		else:
