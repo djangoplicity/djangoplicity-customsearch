@@ -133,9 +133,9 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 	def get_urls( self ):
 		urls = super( CustomSearchAdmin, self ).get_urls()
 		extra_urls = [
-			url( r'^(?P<pk>[0-9]+)/search/$', self.admin_site.admin_view( self.search_view ) ),
-			url( r'^(?P<pk>[0-9]+)/export/$', self.admin_site.admin_view( self.export_view ) ),
-			url( r'^(?P<pk>[0-9]+)/labels/$', self.admin_site.admin_view( self.labels_view ) ),
+			url(r'^(?P<pk>[0-9]+)/search/$', self.admin_site.admin_view(self.search_view), name='customsearch_search'),
+			url(r'^(?P<pk>[0-9]+)/export/$', self.admin_site.admin_view(self.export_view), name='customsearch_export'),
+			url(r'^(?P<pk>[0-9]+)/labels/$', self.admin_site.admin_view(self.labels_view), name='customsearch_labels'),
 		]
 		return extra_urls + urls
 
