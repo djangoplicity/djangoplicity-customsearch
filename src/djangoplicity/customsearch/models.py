@@ -43,7 +43,7 @@ used for e.g. label generation if djangoplicity-contacts is installed.
 
 
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.admin.util import quote
+from django.contrib.admin.utils import quote
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.aggregates import Max, Min

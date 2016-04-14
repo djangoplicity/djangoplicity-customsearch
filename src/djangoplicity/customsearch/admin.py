@@ -29,7 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE
 
-from django.conf.urls import patterns
+from django.conf.urls import url
 from django.contrib import admin
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.http import HttpResponse
@@ -132,11 +132,11 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 
 	def get_urls( self ):
 		urls = super( CustomSearchAdmin, self ).get_urls()
-		extra_urls = patterns( '',
-			( r'^(?P<pk>[0-9]+)/search/$', self.admin_site.admin_view( self.search_view ) ),
-			( r'^(?P<pk>[0-9]+)/export/$', self.admin_site.admin_view( self.export_view ) ),
-			( r'^(?P<pk>[0-9]+)/labels/$', self.admin_site.admin_view( self.labels_view ) ),
-		)
+		extra_urls = [
+			url(r'^(?P<pk>[0-9]+)/search/$', self.admin_site.admin_view(self.search_view), name='customsearch_search'),
+			url(r'^(?P<pk>[0-9]+)/export/$', self.admin_site.admin_view(self.export_view), name='customsearch_export'),
+			url(r'^(?P<pk>[0-9]+)/labels/$', self.admin_site.admin_view(self.labels_view), name='customsearch_labels'),
+		]
 		return extra_urls + urls
 
 	def _get_search_params_from_request( self, request ):
