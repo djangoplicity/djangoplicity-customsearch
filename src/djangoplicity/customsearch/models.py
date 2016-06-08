@@ -119,9 +119,6 @@ class CustomSearchField( models.Model ):
 	def sort_field_name( self ):
 		return str( "%s%s" % ( self.field_name, self.sort_selector if self.sort_selector else self.selector ) )
 
-	def get_modelclass_field( self ):
-		return self.model.model.model_class()._meta.get_field_by_name( self.field_name )
-
 	def sortable( self ):
 		return True
 
@@ -168,10 +165,12 @@ class CustomSearchLayout( models.Model ):
 	def _get_field_value( self, obj, field, expand=False ):
 		modelcls = self.model.model.model_class()
 		try:
-			( field_object, _m, _direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
+			field_object = modelcls._meta.get_field( field.field_name )
 		except FieldDoesNotExist:
 			# The field is most likely a property()
 			return [getattr(obj, field.field_name)]
+
+		m2m = field_object.many_to_many
 
 		# Get accessor value
 		accessor = field.field_name
@@ -201,13 +200,13 @@ class CustomSearchLayout( models.Model ):
 	def _get_header_value( self, field, expand=False ):
 		modelcls = self.model.model.model_class()
 		try:
-			( field_object, _m, direct, m2m ) = modelcls._meta.get_field_by_name( field.field_name )
+			field_object = modelcls._meta.get_field( field.field_name )
 		except FieldDoesNotExist:
 			# The field is most likely a property()
 			return [(field, field.name, field.field_name)]
 
-		if m2m and expand:
-			if direct:
+		if field_object.many_to_many and expand:
+			if not field_object.auto_created or field_object.concrete:
 				cols = []
 				for v in field_object.related.model.objects.all():
 					cols.append( ( field, "%s: %s" % ( field.name, unicode( v ) ), "%s:%s" % ( field.field_name, v.pk ) ) )
