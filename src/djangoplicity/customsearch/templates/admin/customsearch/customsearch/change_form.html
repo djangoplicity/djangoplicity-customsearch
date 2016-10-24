@@ -5,9 +5,9 @@
 {% if change %}{% if not is_popup %}
   <ul class="object-tools">
     {% block object-tools-items %}
-	<li><a href="{% url 'admin_site:customsearch_search' object_id %}" class="historylink">{% trans "Search results" %}</a></li>
-	<li><a href="{% url 'admin_site:customsearch_labels' object_id %}" class="historylink">Labels</a></li>
-	<li><a href="{% url 'admin_site:customsearch_export' object_id %}" class="historylink">{% trans "Export" %}</a></li>
+	<li><a href="{% url opts|admin_urlname:'search' original.pk %}" class="historylink">{% trans "Search results" %}</a></li>
+	<li><a href="{% url opts|admin_urlname:'labels' original.pk %}" class="historylink">Labels</a></li>
+	<li><a href="{% url opts|admin_urlname:'export' original.pk %}" class="historylink">{% trans "Export" %}</a></li>
 	<li><a href="{% url opts|admin_urlname:'history' original.pk|admin_urlquote %}" class="historylink">{% trans "History" %}</a></li>
     {% if has_absolute_url %}<li><a href="../../../r/{{ content_type_id }}/{{ object_id }}/" class="viewsitelink">{% trans "View on site" %}</a></li>{% endif%}
     {% endblock %}
