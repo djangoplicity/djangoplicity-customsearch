@@ -268,10 +268,12 @@ class CustomSearch( models.Model ):
 
 				# Group values for each match type
 				field_match = {}
-				for match, val in values:
+				for match, val in values['values']:
 					if match not in field_match:
 						field_match[match] = []
 					field_match[match].append(val)
+
+				and_together = values['and_together']
 
 				match_texts = []
 				for match, values in field_match.items():
@@ -295,7 +297,10 @@ class CustomSearch( models.Model ):
 					elif match == "__isnull" and False in values:
 						match_texts.append( "is not null" )
 					else:
-						match_texts.append( "%s %s" % ( match_title, " or ".join( ['"%s"' % x for x in values] ) ) )
+						op = ' or '
+						if and_together is True:
+							op = ' and '
+						match_texts.append( "%s %s" % ( match_title, op.join( ['"%s"' % x for x in values] ) ) )
 				field_texts.append( "%s %s" % ( field_title, " or ".join( match_texts ) ) )
 
 			if field_texts:
@@ -325,8 +330,11 @@ class CustomSearch( models.Model ):
 			tmp = exclude if c.exclude else include
 
 			if c.field not in tmp:
-				tmp[c.field] = []
-			tmp[c.field].append( ( c.match, c.prepared_value() ) )
+				tmp[c.field] = {
+					'values': [],
+					'and_together': c.and_together,
+				}
+			tmp[c.field]['values'].append(( c.match, c.prepared_value() ))
 
 		return ( include, exclude )
 
@@ -363,7 +371,7 @@ class CustomSearch( models.Model ):
 				qs.count()
 				error = ""
 			except Exception, e:
-				error = unicode( e )
+				error = str( e )
 				qs = self.get_empty_queryset()
 		else:
 			error = ""
@@ -381,15 +389,25 @@ class CustomSearch( models.Model ):
 		include_queries = []
 		exclude_queries = []
 
-		for field, values in include.items():
-			include_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values] ) )
-
-		for field, values in exclude.items():
-			exclude_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values] ) )
-
 		# Generate queryset for search.
 		modelclass = self.model.model.model_class()
 		qs = modelclass.objects.all()
+
+		for field, values in include.items():
+			# By default we use OR, but if at least the first values' and_together
+			# is true then we user multiple filter():
+
+			if values['and_together']:
+				for match, val in values['values']:
+					qs = qs.filter(**{ str("%s%s" % ( field.full_field_name(), match )): val })
+			else:
+				include_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values['values']] ) )
+
+		# TODO: implement and_together for exclude
+
+		for field, values in exclude.items():
+			exclude_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values['values']] ) )
+
 		if include_queries:
 			#  include queries are ANDed together, unless a same criterium is
 			#  repeated in which case the criterium value are ORed, e.g.:
@@ -454,6 +472,7 @@ class CustomSearchCondition( models.Model ):
 	field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search': True } )
 	match = models.CharField( max_length=30, choices=MATCH_TYPE )
 	value = models.CharField( max_length=255, blank=True )
+	and_together = models.BooleanField(default=False, help_text='"AND" conditions together instead of "OR"')
 
 	def prepared_value( self ):
 		"""
