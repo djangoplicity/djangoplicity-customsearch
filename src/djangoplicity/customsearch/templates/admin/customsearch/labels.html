@@ -38,8 +38,8 @@
         <ul class="object-tools">
           {% block object-tools-items %}
           {% if not error %}
-			<li><a href="{% url 'admin_site:customsearch_search' search.pk %}{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Search results</a></li>
-			<li><a href="{% url 'admin_site:customsearch_export' search.pk %}{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Export</a></li>
+			<li><a href="{% url 'admin_site:customsearch_customsearch_search' search.pk %}{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Search results</a></li>
+			<li><a href="{% url 'admin_site:customsearch_customsearch_export' search.pk %}{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Export</a></li>
           {% endif %}
 			<li><a href="{% url 'admin_site:customsearch_customsearch_change' search.pk %}" class="historylink">Edit</a></li>
           {% endblock %}
