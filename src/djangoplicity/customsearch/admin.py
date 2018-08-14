@@ -34,7 +34,6 @@ from django.contrib import admin
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext
 from django.template.defaultfilters import slugify
 from django.utils.safestring import mark_safe
 from djangoplicity.admincomments.admin import AdminCommentInline, \
@@ -191,7 +190,6 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 					'searchval': searchval if searchval is not None else "",
 					'has_labels': has_labels,
 				},
-				context_instance=RequestContext( request )
 			)
 
 	#@permission_required( 'customsearch.can_view' )
@@ -265,7 +263,6 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 				'searchval': searchval if searchval is not None else "",
 				'has_labels': has_labels,
 			},
-			context_instance=RequestContext( request )
 		)
 
 
