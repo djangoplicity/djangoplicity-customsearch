@@ -36,16 +36,16 @@
  <h1>Custom Search: {{ search.name }}</h1>
 <p><strong>Description:</strong> {{search.human_readable_text}}</p>
 {% if error %}
-    <p class="errornote" style="float: left;"> 
+    <p class="errornote" style="float: left;">
     Error in query: {{error}}.
-    </p> 
+    </p>
 {% else %}
 <p><strong>Total:</strong> {{object_count}}</p>
 {% endif %}
 
 <div id="content-main">
     {% block object-tools %}
-    	
+
         <ul class="object-tools">
           {% block object-tools-items %}
           {% if not error %}
@@ -55,57 +55,57 @@
             <li><a href="../" class="historylink">Edit</a></li>
           {% endblock %}
         </ul>
-        
+
     {% endblock %}
 {% if not error %}
     <div class="module{% if filtered %} filtered{% endif %}" id="changelist">
       {% block search %}
-		<div id="toolbar"><form id="changelist-search" action="" method="get">
-		<div><!-- DIV needed for valid HTML -->
-		<label for="searchbar"><img src="{{STATIC_URL}}admin/img/icon_searchbox.png" alt="Search" /></label>
-		<input type="text" size="40" name="s" value="{{ searchval|escape }}" id="searchbar" />
-		{% if o %}<input type="hidden" size="40" name="o" value="{{ o|escape }}" id="searchbar" />{% endif %}
-		{% if ot %}<input type="hidden" size="40" name="ot" value="{{ ot|escape }}" id="searchbar" />{% endif %}
-		<input type="submit" value="{% trans 'Search' %}" />
-		</div>
-		</form></div>
-		<script type="text/javascript">document.getElementById("searchbar").focus();</script>
+        <div id="toolbar"><form id="changelist-search" action="" method="get">
+        <div><!-- DIV needed for valid HTML -->
+        <label for="searchbar"><img src="/static/app/admin/img/search.svg" alt="Search" /></label>
+        <input type="text" size="40" name="s" value="{{ searchval|escape }}" id="searchbar" />
+        {% if o %}<input type="hidden" size="40" name="o" value="{{ o|escape }}" id="searchbar" />{% endif %}
+        {% if ot %}<input type="hidden" size="40" name="ot" value="{{ ot|escape }}" id="searchbar" />{% endif %}
+        <input type="submit" value="{% trans 'Search' %}" />
+        </div>
+        </form></div>
+        <script type="text/javascript">document.getElementById("searchbar").focus();</script>
       {% endblock %}
       {% block filters %}
       {% endblock %}
       <form id="changelist-form" action="" method="post"{% if cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %}>{% csrf_token %}
       {% block result_list %}
-          	{% if objects.object_list %}
-			<table cellspacing="0" id="result_list">
-			<thead>
-			<tr>
-			<th scope="col" class="action-checbox-column">Edit</th>
-			{% for header in results_header %}
-			<th scope="col"{{header.class_attrib}}>{% if header.sortable %}<a href="{{header.url}}">{% endif %}{{header.name}}{% if header.sortable %}</a>{% endif %}</th>
-			{% endfor %}
-			</tr>
-			</thead>
-			<tbody>
-			{% for row in data_table %}
-			<tr class="{% cycle 'row1' 'row2' %}">
-			<td align="center"><a href="{% url reverse_name row.object_pk %}" class="changelink">&nbsp;</a></td>
-			{% for value in row.values %}
-			<td>{{value}}</td>
-			{% endfor %}
-			</tr>
-			{% endfor %}
-			</tbody>
-			</table>
-			{% endif %}
+            {% if objects.object_list %}
+            <table cellspacing="0" id="result_list">
+            <thead>
+            <tr>
+            <th scope="col" class="action-checbox-column">Edit</th>
+            {% for header in results_header %}
+            <th scope="col"{{header.class_attrib}}>{% if header.sortable %}<a href="{{header.url}}">{% endif %}{{header.name}}{% if header.sortable %}</a>{% endif %}</th>
+            {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in data_table %}
+            <tr class="{% cycle 'row1' 'row2' %}">
+            <td align="center"><a href="{% url reverse_name row.object_pk %}" class="changelink">&nbsp;</a></td>
+            {% for value in row.values %}
+            <td>{{value}}</td>
+            {% endfor %}
+            </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+            {% endif %}
 
       {% endblock %}
-		<p class="paginator">
-		{% if objects.has_other_pages %}
-		{% for i in objects.paginator.page_range %}
-		{% if objects.number == i %}<span class="this-page">{{i}}</span>{% else %}<a href="?p={{i}}{% if searchval %}&s={{ searchval|escape }}{% endif %}{{params}}">{{i}}</a> {% endif %}		
-		{% endfor %}
-		{% endif %}
-		</p>
+        <p class="paginator">
+        {% if objects.has_other_pages %}
+        {% for i in objects.paginator.page_range %}
+        {% if objects.number == i %}<span class="this-page">{{i}}</span>{% else %}<a href="?p={{i}}{% if searchval %}&s={{ searchval|escape }}{% endif %}{{params}}">{{i}}</a> {% endif %}
+        {% endfor %}
+        {% endif %}
+        </p>
       </form>
     </div>
 {% endif %}

@@ -40,34 +40,34 @@ import os
 
 @task
 def export_search(search_id, email, searchval=None, ordering=None, ordering_direction=None):
-	'''
-	Export a given search to file and email to the given address
-	'''
-	search = CustomSearch.objects.get(pk=search_id)
+    '''
+    Export a given search to file and email to the given address
+    '''
+    search = CustomSearch.objects.get(pk=search_id)
 
-	# Rename the / from the search name if any
-	prefix = search.name.replace('/', '-')
+    # Rename the / from the search name if any
+    prefix = search.name.replace('/', '-')
 
-	# Generate a temporary file
-	f = NamedTemporaryFile(prefix=prefix + '-', suffix='.xls', delete=False)
+    # Generate a temporary file
+    f = NamedTemporaryFile(prefix=prefix + '-', suffix='.xls', delete=False)
 
-	(search, qs, searchval, _error, header, _o, _ot) = search.get_results_queryset(
-			searchval=searchval,
-			ordering=ordering,
-			ordering_direction=ordering_direction)
+    (search, qs, searchval, _error, header, _o, _ot) = search.get_results_queryset(
+            searchval=searchval,
+            ordering=ordering,
+            ordering_direction=ordering_direction)
 
-	exporter = ExcelExporter(f, header=[ (x[1], None) for x in header ])
+    exporter = ExcelExporter(f, header=[ (x[1], None) for x in header ])
 
-	for row in search.layout.data_table(qs):
-		exporter.writerow(row['values'])
-	exporter.save(f)
-	f.close()
+    for row in search.layout.data_table(qs):
+        exporter.writerow(row['values'])
+    exporter.save(f)
+    f.close()
 
-	# Send the export file as attachment
-	email = EmailMessage('Custom Search export ready: "%s"' % search.name,
-				'', 'no-reply@eso.org', [email])
-	email.attach_file(f.name)
-	email.send()
+    # Send the export file as attachment
+    email = EmailMessage('Custom Search export ready: "%s"' % search.name,
+                '', 'no-reply@eso.org', [email])
+    email.attach_file(f.name)
+    email.send()
 
-	# Remove the temporary file
-	os.remove(f.name)
+    # Remove the temporary file
+    os.remove(f.name)

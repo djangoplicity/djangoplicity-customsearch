@@ -38,10 +38,10 @@
         <ul class="object-tools">
           {% block object-tools-items %}
           {% if not error %}
-			<li><a href="{% url 'admin_site:customsearch_customsearch_search' search.pk %}{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Search results</a></li>
-			<li><a href="{% url 'admin_site:customsearch_customsearch_export' search.pk %}{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Export</a></li>
+            <li><a href="{% url 'admin_site:customsearch_customsearch_search' search.pk %}{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Search results</a></li>
+            <li><a href="{% url 'admin_site:customsearch_customsearch_export' search.pk %}{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Export</a></li>
           {% endif %}
-			<li><a href="{% url 'admin_site:customsearch_customsearch_change' search.pk %}" class="historylink">Edit</a></li>
+            <li><a href="{% url 'admin_site:customsearch_customsearch_change' search.pk %}" class="historylink">Edit</a></li>
           {% endblock %}
         </ul>
 
@@ -53,37 +53,37 @@
       {% endblock %}
       <form id="changelist-form" action="" method="post"{% if cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %}>{% csrf_token %}
       {% block result_list %}
-          	{% if labels %}
-			<table cellspacing="0" id="result_list">
-			<thead>
-			<tr>
-			<th>Label name</th>
-			<th>Paper</th>
-			<th>Repeat</th>
-			<th></th>
-			</tr>
-			</thead>
-			<tbody>
-			{% for label in labels %}
-			<tr class="{% cycle 'row1' 'row2' %}">
-			<td>{{label.name}}</td>
-			<td>{{label.get_paper_display}}</td>
-			<td>{{label.repeat}}</td>
-			<td>{% if not error %}<a href="?{% if searchval %}s={{ searchval|escape }}&{% endif %}label={{label.pk}}">Download</a>{% endif %}</td>
-			</tr>
-			{% endfor %}
-			</tbody>
-			</table>
-			{% endif %}
+            {% if labels %}
+            <table cellspacing="0" id="result_list">
+            <thead>
+            <tr>
+            <th>Label name</th>
+            <th>Paper</th>
+            <th>Repeat</th>
+            <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for label in labels %}
+            <tr class="{% cycle 'row1' 'row2' %}">
+            <td>{{label.name}}</td>
+            <td>{{label.get_paper_display}}</td>
+            <td>{{label.repeat}}</td>
+            <td>{% if not error %}<a href="?{% if searchval %}s={{ searchval|escape }}&{% endif %}label={{label.pk}}">Download</a>{% endif %}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+            {% endif %}
 
       {% endblock %}
-		<p class="paginator">
-		{% if objects.has_other_pages %}
-		{% for i in objects.paginator.page_range %}
-		{% if objects.number == i %}<span class="this-page">{{i}}</span>{% else %}<a href="?p={{i}}">{{i}}</a> {% endif %}
-		{% endfor %}
-		{% endif %}
-		</p>
+        <p class="paginator">
+        {% if objects.has_other_pages %}
+        {% for i in objects.paginator.page_range %}
+        {% if objects.number == i %}<span class="this-page">{{i}}</span>{% else %}<a href="?p={{i}}">{{i}}</a> {% endif %}
+        {% endfor %}
+        {% endif %}
+        </p>
       </form>
     </div>
   </div>
