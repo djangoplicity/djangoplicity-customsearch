@@ -31,4 +31,4 @@
 #
 include *.txt
 recursive-include docs *
-recursive-include src/djangoplicity/customsearch/templates *
+recursive-include djangoplicity/customsearch/ *
