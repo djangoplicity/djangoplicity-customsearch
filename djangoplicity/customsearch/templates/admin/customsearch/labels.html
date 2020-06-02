@@ -1,0 +1,90 @@
+{% extends "admin/base_site.html" %}
+{% load admin_list i18n %}
+
+{% block extrahead %}
+{{ block.super }}
+{{ media.js }}
+{% endblock %}
+
+{% block bodyclass %}change-list{% endblock %}
+
+{% block breadcrumbs %}{% with search as original %}
+<div class="breadcrumbs">
+     <a href="../../../../">{% trans "Home" %}</a> &rsaquo;
+     <a href="../../../">{{ app_label|capfirst|escape }}</a> &rsaquo;
+     <a href="../../">{{ opts.verbose_name_plural|capfirst }}</a> &rsaquo;
+     <a href="../">{{ original|truncatewords:"18" }}</a> &rsaquo;
+     {% trans "Results" %}
+</div>
+{% endwith %}
+{% endblock %}
+
+
+{% block coltype %}flex{% endblock %}
+{% block site_title %}TEST{% endblock %}
+
+{% block content %}
+ <h1>Custom Search: {{ search.name }}</h1>
+<p><strong>Description:</strong> {{search.human_readable_text}}</p>
+{% if error %}
+    <p class="errornote" style="float: left;">
+    Error in query: {{error}}.
+    </p>
+{% else %}
+<p><strong>Total:</strong> {{object_count}}</p>
+{% endif %}
+<div id="content-main">
+    {% block object-tools %}
+        <ul class="object-tools">
+          {% block object-tools-items %}
+          {% if not error %}
+            <li><a href="{% url 'admin_site:customsearch_customsearch_search' search.pk %}{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Search results</a></li>
+            <li><a href="{% url 'admin_site:customsearch_customsearch_export' search.pk %}{% if searchval %}?s={{ searchval|escape }}{% endif %}" class="historylink">Export</a></li>
+          {% endif %}
+            <li><a href="{% url 'admin_site:customsearch_customsearch_change' search.pk %}" class="historylink">Edit</a></li>
+          {% endblock %}
+        </ul>
+
+    {% endblock %}
+
+    <div class="module{% if filtered %} filtered{% endif %}" id="changelist">
+
+      {% block filters %}
+      {% endblock %}
+      <form id="changelist-form" action="" method="post"{% if cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %}>{% csrf_token %}
+      {% block result_list %}
+            {% if labels %}
+            <table cellspacing="0" id="result_list">
+            <thead>
+            <tr>
+            <th>Label name</th>
+            <th>Paper</th>
+            <th>Repeat</th>
+            <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for label in labels %}
+            <tr class="{% cycle 'row1' 'row2' %}">
+            <td>{{label.name}}</td>
+            <td>{{label.get_paper_display}}</td>
+            <td>{{label.repeat}}</td>
+            <td>{% if not error %}<a href="?{% if searchval %}s={{ searchval|escape }}&{% endif %}label={{label.pk}}">Download</a>{% endif %}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+            {% endif %}
+
+      {% endblock %}
+        <p class="paginator">
+        {% if objects.has_other_pages %}
+        {% for i in objects.paginator.page_range %}
+        {% if objects.number == i %}<span class="this-page">{{i}}</span>{% else %}<a href="?p={{i}}">{{i}}</a> {% endif %}
+        {% endfor %}
+        {% endif %}
+        </p>
+      </form>
+    </div>
+  </div>
+{% endblock %}
