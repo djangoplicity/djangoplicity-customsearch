@@ -34,12 +34,10 @@ from setuptools import setup, find_packages
 
 setup(
     name='djangoplicity-customsearch',
-    version='0.1',
-    packages=find_packages('src'),
-    package_dir={ '': 'src' },
+    version='0.2.0',
+    packages=find_packages(include=['djangoplicity', 'djangoplicity.*']),
     include_package_data=True,
     zip_safe=False,
-    namespace_packages=['djangoplicity'],
     install_requires=[
         'setuptools',
         'xlwt',
