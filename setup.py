@@ -34,7 +34,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='djangoplicity-customsearch',
-    version='0.1',
+    version='0.2.0',
     packages=find_packages(include=['djangoplicity', 'djangoplicity.*']),
     include_package_data=True,
     zip_safe=False,
