@@ -1,0 +1,8 @@
+[run]
+source = djangoplicity.customsearch
+branch = 1
+omit =
+    */pytest.py
+
+[report]
+omit = *tests*,*migrations*,.tox/*,setup.py,*settings.py
