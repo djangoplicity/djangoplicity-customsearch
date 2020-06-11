@@ -89,7 +89,7 @@ DATABASES = {
         'USER': 'djangoplicity-customsearch',
         'PASSWORD': 'djangoplicity-customsearch',
         'HOST': 'djangoplicity-customsearch-db',
-        'PORT': 5433,
+        'PORT': 5432,
     }
 }
 
