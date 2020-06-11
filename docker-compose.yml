@@ -17,8 +17,8 @@ services:
     container_name: djangoplicity-customsearch-web
     command: ["./scripts/command-dev.sh"]
     volumes:
-    - ./djangoplicity:/app/djangoplicity
-    - ./tests:/app/tests
+      - ./djangoplicity:/app/djangoplicity
+      - ./tests:/app/tests
     ports:
       - "8001:8000"
     depends_on:
