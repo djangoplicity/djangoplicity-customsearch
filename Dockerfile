@@ -13,8 +13,6 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir /app
 WORKDIR /app
 
-ENV DJANGO_SETTINGS_MODULE tests.testapp.settings
-
 COPY requirements.txt /app/
 
 RUN pip install -r requirements.txt
