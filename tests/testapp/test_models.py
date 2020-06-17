@@ -1,6 +1,6 @@
 from django.test import TestCase
 
 
-class TestIsWorking(TestCase):
-    def test_is_working(self):
+class TestModels(TestCase):
+    def test_models(self):
         self.assertIsNone(None)

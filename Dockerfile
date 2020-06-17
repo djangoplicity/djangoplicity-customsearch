@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir /app
 WORKDIR /app
 
-COPY requirements.txt /app/
+COPY requirements/ requirements/
+COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
@@ -22,3 +23,4 @@ RUN chmod +x scripts/command-dev.sh
 COPY djangoplicity/ djangoplicity/
 COPY tests/ tests/
 COPY setup.cfg .
+COPY setup.py .
