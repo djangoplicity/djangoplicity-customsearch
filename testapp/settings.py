@@ -13,11 +13,6 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os
 import sys
 
-here = os.path.dirname(os.path.abspath(__file__))
-parent = os.path.dirname(here)
-grandparent = os.path.dirname(parent)
-sys.path[0:0] = [here, parent, grandparent]
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -89,7 +84,7 @@ DATABASES = {
         'USER': 'djangoplicity-customsearch',
         'PASSWORD': 'djangoplicity-customsearch',
         'HOST': 'djangoplicity-customsearch-db',
-        'PORT': 5432,
+        'PORT': '5432',
     }
 }
 

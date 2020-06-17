@@ -12,12 +12,9 @@ here = os.path.dirname(os.path.abspath(__file__))
 parent = os.path.dirname(here)
 sys.path[0:0] = [here, parent]
 
-sys.path.append('./testapp')
-
 from django.test.runner import DiscoverRunner
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'testapp.settings')
-
 
 def main(test_labels=None):
     django.setup()
