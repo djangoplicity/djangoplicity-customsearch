@@ -1,4 +1,4 @@
-name: Django CI
+name: Djangoplicity Customsearch CI
 
 on:
   push:
@@ -44,4 +44,12 @@ jobs:
       - name: Run migrations
         run: python manage.py migrate
       - name: Run tests
-        run: py.test
+        run: |
+          coverage run --source='.' manage.py test
+          coverage xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          env_vars: OS,PYTHON
