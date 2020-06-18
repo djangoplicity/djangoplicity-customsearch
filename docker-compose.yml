@@ -18,6 +18,10 @@ services:
     command: ["./scripts/command-dev.sh"]
     volumes:
       - ./djangoplicity:/app/djangoplicity
+      - ./testapp/:/app/testapp
+      - ./htmlcov:/app/htmlcov
+      - ./.coveragerc:/app/.coveragerc
+      - ./db:/app/db
       - ./tests:/app/tests
     ports:
       - "8001:8000"
