@@ -24,6 +24,7 @@ COPY djangoplicity/ djangoplicity/
 COPY testapp/ testapp/
 COPY tests/ tests/
 COPY setup.cfg .
-COPY manage.py .
-COPY tox.ini .
 COPY setup.py .
+COPY tox.ini .
+COPY .coveragerc .
+COPY manage.py .
