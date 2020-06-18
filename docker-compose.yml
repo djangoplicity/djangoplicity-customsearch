@@ -20,7 +20,7 @@ services:
     command: ["./scripts/command-dev.sh"]
     volumes:
       - ./djangoplicity:/app/djangoplicity
-      - ./testapp/:/app/testapp
+      - ./test_project/:/app/test_project
       - ./htmlcov:/app/htmlcov
       - ./.coveragerc:/app/.coveragerc
       - ./tests:/app/tests

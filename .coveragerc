@@ -4,4 +4,4 @@ branch = 1
 omit = */migrations/*
 
 [report]
-omit = *tests*,*testapp*,*migrations*,.tox/*,setup.py,*settings.py,manage.py
+omit = *tests*,*test_project*,*migrations*,.tox/*,setup.py,*settings.py,manage.py

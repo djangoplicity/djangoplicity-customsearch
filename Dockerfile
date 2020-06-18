@@ -21,7 +21,7 @@ RUN pip install -r requirements.txt
 COPY scripts/ scripts/
 RUN chmod +x scripts/command-dev.sh
 COPY djangoplicity/ djangoplicity/
-COPY testapp/ testapp/
+COPY test_project/ test_project/
 COPY tests/ tests/
 COPY setup.cfg .
 COPY setup.py .
