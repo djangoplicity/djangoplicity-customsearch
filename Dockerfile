@@ -23,7 +23,6 @@ RUN chmod +x scripts/command-dev.sh
 COPY djangoplicity/ djangoplicity/
 COPY test_project/ test_project/
 COPY tests/ tests/
-COPY setup.cfg .
 COPY setup.py .
 COPY tox.ini .
 COPY .coveragerc .
