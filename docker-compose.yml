@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:10.5
+    container_name: djangoplicity-customsearch-db
+    restart: always
+    environment:
+      POSTGRES_DB: djangoplicity-customsearch
+      POSTGRES_USER: djangoplicity-customsearch
+      POSTGRES_PASSWORD: djangoplicity-customsearch
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "51432:5432"
+
+  web:
+    build: .
+    container_name: djangoplicity-customsearch
+    command: ["./scripts/command-dev.sh"]
+    volumes:
+      - ./djangoplicity:/app/djangoplicity
+      - ./test_project/:/app/test_project
+      - ./htmlcov:/app/htmlcov
+      - ./.coveragerc:/app/.coveragerc
+      - ./tests:/app/tests
+    ports:
+      - "8001:8000"
+    depends_on:
+      - db
+volumes:
+  pgdata:
