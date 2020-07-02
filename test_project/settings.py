@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'djangoplicity.admincomments',
     'djangoplicity.customsearch'
-
 ]
 
 MIDDLEWARE = [

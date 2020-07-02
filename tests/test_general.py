@@ -3,4 +3,4 @@ from django.test import TestCase
 
 class TestModels(TestCase):
     def test_models(self):
-        self.assertIsNone(None)
+        self.assertEqual(10, 10)

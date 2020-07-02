@@ -28,3 +28,8 @@
 # IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE
+from django.test import TestCase
+
+class TestModels(TestCase):
+    def test_models(self):
+        self.assertIsNone(None)
