@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
@@ -27,7 +26,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -35,10 +33,13 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.sites',
+    'django.contrib.redirects',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'djangoplicity.admincomments',
-    'djangoplicity.customsearch'
+    'djangoplicity.customsearch',
+    'test_project'
 ]
 
 MIDDLEWARE = [
@@ -71,7 +72,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'test_project.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
@@ -89,16 +89,14 @@ DATABASES = {
 if os.environ.get('GITHUB_WORKFLOW'):
     DATABASES = {
         'default': {
-           'ENGINE': 'django.db.backends.postgresql',
-           'NAME': 'djangoplicity-customsearch',
-           'USER': 'djangoplicity-customsearch',
-           'PASSWORD': 'djangoplicity-customsearch',
-           'HOST': '127.0.0.1',
-           'PORT': '5432',
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'djangoplicity-customsearch',
+            'USER': 'djangoplicity-customsearch',
+            'PASSWORD': 'djangoplicity-customsearch',
+            'HOST': '127.0.0.1',
+            'PORT': '5432',
         }
     }
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -118,11 +116,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
+
+SITE_ID = 1
 
 TIME_ZONE = 'UTC'
 
@@ -132,8 +131,15 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# JAVASCRIPT CUSTOM CONFIG
+JQUERY_JS = "jquery/jquery-1.11.1.min.js"
+JQUERY_UI_JS = "jquery-ui-1.12.1/jquery-ui.min.js"
+JQUERY_UI_CSS = "jquery-ui-1.12.1/jquery-ui.min.css"
+DJANGOPLICITY_ADMIN_CSS = "djangoplicity/css/admin.css"
+DJANGOPLICITY_ADMIN_JS = "djangoplicity/js/admin.js"
+SUBJECT_CATEGORY_CSS = "djangoplicity/css/widgets.css"
