@@ -215,7 +215,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
                 objects = paginator.page( page )
             except ( EmptyPage, InvalidPage ):
                 objects = paginator.page( paginator.num_pages )
-        except Exception, e:
+        except Exception as e:
             error = unicode( e )
             qs = search.get_empty_queryset()
             paginator = Paginator( qs, 100 )

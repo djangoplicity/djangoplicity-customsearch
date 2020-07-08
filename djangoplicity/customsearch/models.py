@@ -52,6 +52,7 @@ from django.db.models.fields.related import ForeignObjectRel
 
 from datetime import datetime
 import operator
+from functools import reduce
 
 MATCH_TYPE = (
     ( '__exact', 'Exact' ),
@@ -370,7 +371,7 @@ class CustomSearch( models.Model ):
             try:
                 qs.count()
                 error = ""
-            except Exception, e:
+            except Exception as e:
                 error = str( e )
                 qs = self.get_empty_queryset()
         else:
