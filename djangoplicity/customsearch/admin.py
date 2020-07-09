@@ -29,6 +29,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 from django.conf.urls import url
 from django.contrib import admin
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
@@ -216,13 +219,13 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
             except ( EmptyPage, InvalidPage ):
                 objects = paginator.page( paginator.num_pages )
         except Exception as e:
-            error = unicode( e )
+            error = str( e )
             qs = search.get_empty_queryset()
             paginator = Paginator( qs, 100 )
             objects = paginator.page( 1 )
 
         # Paginator params
-        from urllib import urlencode
+        from urllib.parse import urlencode
         params = "&%s" % urlencode( { 'o': o, 'ot': ot } ) if o and ot else ""
 
         # Results header

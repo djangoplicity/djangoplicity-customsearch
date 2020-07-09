@@ -42,6 +42,8 @@ used for e.g. label generation if djangoplicity-contacts is installed.
 """
 
 
+from builtins import str
+from builtins import object
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.utils import quote
 from django.core.exceptions import ValidationError
@@ -130,7 +132,7 @@ class CustomSearchField( models.Model ):
     def __unicode__( self ):
         return "%s: %s" % ( self.model.name, self.name, )
 
-    class Meta:
+    class Meta(object):
         ordering = ['model__name', 'name']
 
 
@@ -190,7 +192,7 @@ class CustomSearchLayout( models.Model ):
                     cols.append( "" )
             return cols
         elif m2m and not expand:
-            tmp = "\";\"".join( [unicode( x ).replace( '"', '""' ) for x in getattr( obj, accessor ).all()] )
+            tmp = "\";\"".join( [str( x ).replace( '"', '""' ) for x in getattr( obj, accessor ).all()] )
             return [ '"%s"' % tmp if tmp else "" ]
         else:
             result = getattr( obj, accessor )
@@ -210,7 +212,7 @@ class CustomSearchLayout( models.Model ):
             if not field_object.auto_created or field_object.concrete:
                 cols = []
                 for v in field_object.remote_field.model.objects.all():
-                    cols.append( ( field, "%s: %s" % ( field.name, unicode( v ) ), "%s:%s" % ( field.field_name, v.pk ) ) )
+                    cols.append( ( field, "%s: %s" % ( field.name, str( v ) ), "%s:%s" % ( field.field_name, v.pk ) ) )
                 return cols
         else:
             return [( field, field.name, field.field_name )]
@@ -231,7 +233,7 @@ class CustomSearchLayoutField( models.Model ):
         if not self.field.enable_layout:
             raise ValidationError( 'Field %s does not allow use in layout' % self.field )
 
-    class Meta:
+    class Meta(object):
         ordering = ['position', 'id']
 
 
@@ -244,7 +246,7 @@ class CustomSearch( models.Model ):
     group = models.ForeignKey( CustomSearchGroup, blank=True, null=True )
     layout = models.ForeignKey( CustomSearchLayout )
 
-    class Meta:
+    class Meta(object):
         verbose_name_plural = 'custom searches'
         permissions = [
             ( "can_view", "Can view all custom searches" ),
@@ -264,7 +266,7 @@ class CustomSearch( models.Model ):
 
         for conditions, title in [( include, 'Include' ), ( exclude, 'Exclude' )]:
             field_texts = []
-            for field, values in conditions.items():
+            for field, values in list(conditions.items()):
                 field_title = field.name.lower()
 
                 # Group values for each match type
@@ -277,7 +279,7 @@ class CustomSearch( models.Model ):
                 and_together = values['and_together']
 
                 match_texts = []
-                for match, values in field_match.items():
+                for match, values in list(field_match.items()):
                     if match == '__exact':
                         match_title = "matches"
                     elif match == '__iexact':
@@ -394,7 +396,7 @@ class CustomSearch( models.Model ):
         modelclass = self.model.model.model_class()
         qs = modelclass.objects.all()
 
-        for field, values in include.items():
+        for field, values in list(include.items()):
             # By default we use OR, but if at least the first values' and_together
             # is true then we user multiple filter():
 
@@ -406,7 +408,7 @@ class CustomSearch( models.Model ):
 
         # TODO: implement and_together for exclude
 
-        for field, values in exclude.items():
+        for field, values in list(exclude.items()):
             exclude_queries.append( reduce( operator.or_, [models.Q( **{ str("%s%s" % ( field.full_field_name(), match )): val } ) for ( match, val ) in values['values']] ) )
 
         if include_queries:
