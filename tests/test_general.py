@@ -124,7 +124,7 @@ class TestModels(TestCase):
 
     # TODO: refactor tests for ordering
     def test_custom_search_ordering(self):
-        """Test that the custom search ordering is right"""
+        """Test that the custom search ordering is correct"""
         queryset = CustomSearch.objects.all()
 
         self.assertEqual(queryset[0], self.cs)
@@ -153,7 +153,7 @@ class TestModels(TestCase):
         self.assertTrue(self.csf.sortable())
 
     def test_custom_search_field_ordering(self):
-        """Test the custom search field ordering is right"""
+        """Test the custom search field ordering is correct"""
         queryset = CustomSearchField.objects.all()
         field = create_custom_search_field(model=self.csm, name='body')
 
@@ -210,7 +210,7 @@ class TestModels(TestCase):
         self.assertTrue(('Field %s does not belong to %s' % (field, self.cs.model.name)) in context.exception)
 
     def test_custom_search_condition_prepared_value(self):
-        """Test prepared_value method of custom search condition returns the right value"""
+        """Test prepared_value method of custom search condition returns the correct value"""
         # This test is disabled because the date doesn't match, it needs to be mocked
         # condition = create_custom_search_condition(search=self.cs, field=self.csf, value='now()', match=14)
         # self.assertEqual(condition.prepared_value(), datetime.now())
@@ -273,7 +273,7 @@ class TestModels(TestCase):
         self.assertTrue(('Field %s does not allow use in layout' % field) in context.exception)
 
     def test_custom_search_layout_field_ordering(self):
-        """Test the custom search layout field ordering is right"""
+        """Test the custom search layout field ordering is correct"""
         field = create_custom_search_field(model=self.csm, name='body', selector='something else', enable_layout=False)
         layout_field1 = create_custom_search_layout_field(layout=self.csl, field=self.csf, position=0)
         layout_field2 = create_custom_search_layout_field(layout=self.csl, field=field, position=1)
