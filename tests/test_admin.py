@@ -57,11 +57,16 @@ class AdminSiteTests(TestCase):
             body='Quisque velit ipsum, suscipit non ultricies vitae, luctus eget urna. Suspendisse feugiat ac massa.',
             pub_date=datetime.now()
         )
-        url = reverse('admin:customsearch_customsearch_search', args=[self.cs.pk])
+        url = "/admin/customsearch/customsearch/%s/search/?s=Lorem&p=not_a_number" % self.cs.pk
         res = self.client.get(url)
 
         self.assertContains(res, entry.title)
         self.assertContains(res, 'Include entrys where title contains &quot;Lorem&quot;.')
+
+    def test_custom_search_search_page_status_200_invalid_page(self):
+        url = "/admin/customsearch/customsearch/%s/search/?s=not_a_valid_term&p=200" % self.cs.pk
+        res = self.client.get(url)
+        self.assertEquals(res.status_code, 200)
 
     def test_custom_search_labels_page(self):
         """Test that labels page returns an error message because djangoplicity-contacts is not installed"""
