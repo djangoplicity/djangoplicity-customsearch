@@ -40,10 +40,12 @@ class AdminSiteTests(TestCase):
             self.assertEqual(res.status_code, 200)
 
     def test_custom_searches_listed(self):
+        """Test that searches are listed on change list page"""
         url = reverse('admin:customsearch_customsearch_changelist')
         res = self.client.get(url)
 
         self.assertContains(res, self.cs.name)
+        self.assertContains(res, self.csm.name)
         self.assertContains(res, self.csg.name)
         self.assertContains(res, 'Export')
         self.assertContains(res, 'Results')
@@ -60,13 +62,16 @@ class AdminSiteTests(TestCase):
         url = "/admin/customsearch/customsearch/%s/search/?s=Lorem&p=not_a_number" % self.cs.pk
         res = self.client.get(url)
 
+        self.assertContains(res, 'Custom Search: %s' % self.cs.name)
         self.assertContains(res, entry.title)
         self.assertContains(res, 'Include entrys where title contains &quot;Lorem&quot;.')
 
     def test_custom_search_search_page_status_200_invalid_page(self):
+        """Test that response returns status code 200 even if search and page params are not valid"""
         url = "/admin/customsearch/customsearch/%s/search/?s=not_a_valid_term&p=200" % self.cs.pk
         res = self.client.get(url)
         self.assertEquals(res.status_code, 200)
+        self.assertContains(res, '<strong>Total:</strong> 0', html=True)
 
     def test_custom_search_labels_page(self):
         """Test that labels page returns an error message because djangoplicity-contacts is not installed"""
@@ -75,3 +80,17 @@ class AdminSiteTests(TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertContains(res, 'Labels generation support not available.')
+
+    def test_custom_search_change_page(self):
+        """Test that custom search change page shows human readable text and action buttons"""
+        create_custom_search_condition(search=self.cs, field=self.csf, value='Lorem', match=1)
+
+        url = reverse('admin:customsearch_customsearch_change', args=[self.cs.pk])
+        res = self.client.get(url)
+
+        self.assertEquals(res.status_code, 200)
+        self.assertContains(res, 'Change custom search')
+        self.assertContains(res, 'Search results')
+        self.assertContains(res, 'Labels')
+        self.assertContains(res, 'Export')
+        self.assertContains(res, 'Include entrys where title contains &quot;Lorem&quot;.')
