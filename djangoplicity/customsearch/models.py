@@ -85,7 +85,7 @@ class CustomSearchGroup( models.Model ):
     """
     name = models.CharField( max_length=255, blank=True )
 
-    def __unicode__( self ):
+    def __str__( self ):
         return self.name
 
 
@@ -96,7 +96,7 @@ class CustomSearchModel( models.Model ):
     name = models.CharField( max_length=255 )
     model = models.ForeignKey( ContentType )
 
-    def __unicode__( self ):
+    def __str__( self ):
         return self.name
 
 
@@ -126,7 +126,7 @@ class CustomSearchField( models.Model ):
         if self.selector != "" and not self.selector.startswith( "__" ):
             raise ValidationError( "Selector must start with two underscores" )
 
-    def __unicode__( self ):
+    def __str__( self ):
         return "%s: %s" % ( self.model.name, self.name, )
 
     class Meta:
@@ -214,7 +214,7 @@ class CustomSearchLayout( models.Model ):
         else:
             return [( field, field.name, field.field_name )]
 
-    def __unicode__( self ):
+    def __str__( self ):
         return "%s: %s" % ( self.model.name, self.name, )
 
 
@@ -250,7 +250,7 @@ class CustomSearch( models.Model ):
         ]
         ordering = ['name']
 
-    def __unicode__( self ):
+    def __str__( self ):
         return self.name
 
     def human_readable_text( self ):
