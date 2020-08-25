@@ -3,7 +3,7 @@ setuptools
 xlwt
 
 # djangoplicity
-git+https://@github.com/djangoplicity/djangoplicity.git@develop
+git+https://@github.com/djangoplicity/djangoplicity.git@upgrade/manual-python3-upgrades
 
 # PostgreSQL python client
 psycopg2-binary==2.8.5
