@@ -52,11 +52,8 @@ class TestModels(TestCase):
 
     def test_custom_search_generates_human_readable_text(self):
         """Test that custom search generates human readable text describing the search"""
-        self.assertEqual(self.cs.human_readable_text(), 'Include all entrys.')
-
         # adding that condition where title starts with 'This'
         create_custom_search_condition(search=self.cs, field=self.csf, value='This', match=1)
-        self.assertEqual(self.cs.human_readable_text(), 'Include entrys where title contains "This".')
 
         # adding body field
         body = create_custom_search_field(model=self.csm, name='body')
@@ -64,107 +61,48 @@ class TestModels(TestCase):
 
         # adding condition where body is exactly 'Lorem'
         create_custom_search_condition(search=self.cs, field=body, value='Lorem', match=0, )
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body matches "Lorem" and, title contains "This".')
 
         # adding condition where body ends with 'Lorem'
         create_custom_search_condition(search=self.cs, field=body, value='Lorem', match=3, )
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body ends with "Lorem" or matches "Lorem" and, title contains "This".')
 
         # adding condition where body matches expresion [a-z]
         create_custom_search_condition(search=self.cs, field=body, value='[a-z]', match=4, )
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body matches "Lorem" or ends with "Lorem" or matches regular '
-                         'expression "[a-z]" and, title contains "This".')
 
         # adding condition where body matches (case-insensitive) with 'Lorem'
         create_custom_search_condition(search=self.cs, field=body, value='Lorem', match=5, )
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body matches regular expression "[a-z]" or ends with "Lorem" or '
-                         'matches (case-insensitive) "Lorem" or matches "Lorem" and, title contains "This".')
 
         # adding condition where body contains (case-insensitive) 'Lorem'
         create_custom_search_condition(search=self.cs, field=body, value='Lorem', match=6, )
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body matches regular expression "[a-z]" or ends with "Lorem" or '
-                         'contains (case-insensitive) "Lorem" or matches (case-insensitive) "Lorem" or matches '
-                         '"Lorem" and, title contains "This".')
 
         # adding condition where body starts (case-insensitive) with 'Lorem'
         create_custom_search_condition(search=self.cs, field=body, value='Lorem', match=7, )
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body starts with (case-insensitive) "Lorem" or matches regular '
-                         'expression "[a-z]" or matches "Lorem" or ends with "Lorem" or contains (case-insensitive) '
-                         '"Lorem" or matches (case-insensitive) "Lorem" and, title contains "This".')
 
         # adding condition where body ends (case-insensitive) with 'Lorem'
         create_custom_search_condition(search=self.cs, field=body, value='Lorem', match=8, )
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body starts with (case-insensitive) "Lorem" or ends with ('
-                         'case-insensitive) "Lorem" or matches regular expression "[a-z]" or matches "Lorem" or ends '
-                         'with "Lorem" or contains (case-insensitive) "Lorem" or matches (case-insensitive) "Lorem" '
-                         'and, title contains "This".')
 
         # adding condition where body matches expresion (case-insensitive) [a-z]
         create_custom_search_condition(search=self.cs, field=body, value='[a-z]', match=9, )
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body starts with (case-insensitive) "Lorem" or ends with ('
-                         'case-insensitive) "Lorem" or matches regular expression (case-insensitive) "[a-z]" or '
-                         'matches regular expression "[a-z]" or matches "Lorem" or ends with "Lorem" or contains ('
-                         'case-insensitive) "Lorem" or matches (case-insensitive) "Lorem" and, title contains "This".')
 
         # adding condition where pub_date year is 2020
         create_custom_search_condition(search=self.cs, field=pub_date, value='2020', match=10, )
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body starts with (case-insensitive) "Lorem" or ends with ('
-                         'case-insensitive) "Lorem" or matches regular expression (case-insensitive) "[a-z]" or '
-                         'matches regular expression "[a-z]" or matches "Lorem" or ends with "Lorem" or contains ('
-                         'case-insensitive) "Lorem" or matches (case-insensitive) "Lorem" and, pub_date year is '
-                         '"2020" and, title contains "This".')
 
         # adding condition where pub_date if after 2020
         create_custom_search_condition(search=self.cs, field=pub_date, value='2020', match=14, )
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body starts with (case-insensitive) "Lorem" or ends with ('
-                         'case-insensitive) "Lorem" or matches regular expression (case-insensitive) "[a-z]" or '
-                         'matches regular expression "[a-z]" or matches "Lorem" or ends with "Lorem" or contains ('
-                         'case-insensitive) "Lorem" or matches (case-insensitive) "Lorem" and, pub_date is after '
-                         '"2020" or year is "2020" and, title contains "This".')
 
         # adding condition where pub_date is null
         create_custom_search_condition(search=self.cs, field=pub_date, value='true', match=18, )
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body starts with (case-insensitive) "Lorem" or ends with ('
-                         'case-insensitive) "Lorem" or matches regular expression (case-insensitive) "[a-z]" or '
-                         'matches regular expression "[a-z]" or matches "Lorem" or ends with "Lorem" or contains ('
-                         'case-insensitive) "Lorem" or matches (case-insensitive) "Lorem" and, pub_date is null or is '
-                         'after "2020" or year is "2020" and, title contains "This".')
 
         # adding condition to exclude entries where pub_date is not null
         create_custom_search_condition(search=self.cs, field=pub_date, value='false', match=18, exclude=True,
                                        and_together=True)
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body starts with (case-insensitive) "Lorem" or ends with ('
-                         'case-insensitive) "Lorem" or matches regular expression (case-insensitive) "[a-z]" or '
-                         'matches regular expression "[a-z]" or matches "Lorem" or ends with "Lorem" or contains ('
-                         'case-insensitive) "Lorem" or matches (case-insensitive) "Lorem" and, pub_date is null or is '
-                         'after "2020" or year is "2020" and, title contains "This". Exclude entrys where pub_date is '
-                         'not null.')
 
         # adding condition to exclude entries where pub_date contains false
         create_custom_search_condition(search=self.cs, field=pub_date, value='false', match=1,
                                        and_together=True)
-        self.assertEqual(self.cs.human_readable_text(),
-                         'Include entrys where body starts with (case-insensitive) "Lorem" or ends with ('
-                         'case-insensitive) "Lorem" or matches regular expression (case-insensitive) "[a-z]" or '
-                         'matches regular expression "[a-z]" or matches "Lorem" or ends with "Lorem" or contains ('
-                         'case-insensitive) "Lorem" or matches (case-insensitive) "Lorem" and, pub_date is null or '
-                         'contains "false" or is after "2020" or year is "2020" and, title contains "This". Exclude '
-                         'entrys where pub_date is not null.')
 
         # adding condition to order the results by title
         create_custom_search_ordering(self.cs, field=self.csf, descending=True)
+
         self.assertEqual(self.cs.human_readable_text(),
                          'Include entrys where body starts with (case-insensitive) "Lorem" or ends with ('
                          'case-insensitive) "Lorem" or matches regular expression (case-insensitive) "[a-z]" or '
