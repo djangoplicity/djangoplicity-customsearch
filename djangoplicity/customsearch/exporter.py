@@ -29,6 +29,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE
 
+from builtins import str
+from past.builtins import basestring
+from builtins import object
 import xlwt
 import datetime
 import decimal
@@ -118,7 +121,7 @@ class ExcelExporter( Exporter ):
         if (isinstance( value, basestring ) or
             isinstance( value, int ) or
             isinstance( value, float ) or
-            isinstance( value, long ) or
+            isinstance( value, int ) or
             isinstance( value, decimal.Decimal ) or
             isinstance( value, bool ) or
             isinstance( value, decimal.Decimal ) or
@@ -131,10 +134,10 @@ class ExcelExporter( Exporter ):
         elif isinstance( value, datetime.time ):
             return [value, self.styles['time']]
         else:
-            return [unicode( value )]
+            return [str( value )]
 
     def _prepare_values( self, values ):
-        return map( lambda x: self._prepare_value( x ), values )
+        return [self._prepare_value( x ) for x in values]
 
     def writerow( self, row, style=None, **kwargs ):
         i = 0
