@@ -70,7 +70,7 @@ class AdminSiteTests(TestCase):
         """Test that response returns status code 200 even if search and page params are not valid"""
         url = "/admin/customsearch/customsearch/%s/search/?s=not_a_valid_term&p=200" % self.cs.pk
         res = self.client.get(url)
-        self.assertEquals(res.status_code, 200)
+        self.assertEqual(res.status_code, 200)
         self.assertContains(res, '<strong>Total:</strong> 0', html=True)
 
     def test_custom_search_labels_page(self):
@@ -88,7 +88,7 @@ class AdminSiteTests(TestCase):
         url = reverse('admin:customsearch_customsearch_change', args=[self.cs.pk])
         res = self.client.get(url)
 
-        self.assertEquals(res.status_code, 200)
+        self.assertEqual(res.status_code, 200)
         self.assertContains(res, 'Change custom search')
         self.assertContains(res, 'Search results')
         self.assertContains(res, 'Labels')
