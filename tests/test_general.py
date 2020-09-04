@@ -161,6 +161,7 @@ class TestModels(TestCase):
     def test_custom_search_clean_raises_validation_error(self):
         """Test clean method on custom search raises a validation error when the layout does not belong to the
         model """
+        self.cs.clean()
         model = create_custom_search_model(name='author model', model=Author)
         layout = create_custom_search_layout(name='author layout', model=model)
         search = create_custom_search(model=self.csm, group=self.csg, layout=layout)
