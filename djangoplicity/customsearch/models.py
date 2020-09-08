@@ -54,6 +54,7 @@ from django.db.models.fields.related import ForeignObjectRel
 from datetime import datetime
 import operator
 from functools import reduce
+from future.utils import python_2_unicode_compatible
 
 MATCH_TYPE = (
     ( '__exact', 'Exact' ),
@@ -81,16 +82,18 @@ MATCH_TYPE = (
 # List of allowed field loookup types
 
 
+@python_2_unicode_compatible
 class CustomSearchGroup( models.Model ):
     """
     Groups for custom searches
     """
     name = models.CharField( max_length=255, blank=True )
 
-    def __unicode__( self ):
+    def __str__( self ):
         return self.name
 
 
+@python_2_unicode_compatible
 class CustomSearchModel( models.Model ):
     """
     Define which models you can search on.
@@ -98,10 +101,11 @@ class CustomSearchModel( models.Model ):
     name = models.CharField( max_length=255 )
     model = models.ForeignKey( ContentType )
 
-    def __unicode__( self ):
+    def __str__( self ):
         return self.name
 
 
+@python_2_unicode_compatible
 class CustomSearchField( models.Model ):
     """
     Define a field for a custom search model
@@ -128,13 +132,14 @@ class CustomSearchField( models.Model ):
         if self.selector != "" and not self.selector.startswith( "__" ):
             raise ValidationError( "Selector must start with two underscores" )
 
-    def __unicode__( self ):
+    def __str__( self ):
         return "%s: %s" % ( self.model.name, self.name, )
 
     class Meta:
         ordering = ['model__name', 'name']
 
 
+@python_2_unicode_compatible
 class CustomSearchLayout( models.Model ):
     """
     """
@@ -216,7 +221,7 @@ class CustomSearchLayout( models.Model ):
         else:
             return [( field, field.name, field.field_name )]
 
-    def __unicode__( self ):
+    def __str__( self ):
         return "%s: %s" % ( self.model.name, self.name, )
 
 
@@ -236,6 +241,7 @@ class CustomSearchLayoutField( models.Model ):
         ordering = ['position', 'id']
 
 
+@python_2_unicode_compatible
 class CustomSearch( models.Model ):
     """
     Model for defining a custom search on the contact model
@@ -252,7 +258,7 @@ class CustomSearch( models.Model ):
         ]
         ordering = ['name']
 
-    def __unicode__( self ):
+    def __str__( self ):
         return self.name
 
     def human_readable_text( self ):
