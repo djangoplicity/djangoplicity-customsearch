@@ -9,7 +9,7 @@ git+https://@github.com/djangoplicity/djangoplicity.git@release/python3
 psycopg2-binary==2.8.5
 
 # Asynchronous Task Queue
-celery==4.3.0
+celery==4.4.7
 
 # Python 2/3 compatibility library
 future
