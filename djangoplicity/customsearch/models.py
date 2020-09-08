@@ -54,6 +54,7 @@ from django.db.models.fields.related import ForeignObjectRel
 from datetime import datetime
 import operator
 from functools import reduce
+from future.utils import python_2_unicode_compatible
 
 MATCH_TYPE = (
     ( '__exact', 'Exact' ),
@@ -81,6 +82,7 @@ MATCH_TYPE = (
 # List of allowed field loookup types
 
 
+@python_2_unicode_compatible
 class CustomSearchGroup( models.Model ):
     """
     Groups for custom searches
@@ -91,6 +93,7 @@ class CustomSearchGroup( models.Model ):
         return self.name
 
 
+@python_2_unicode_compatible
 class CustomSearchModel( models.Model ):
     """
     Define which models you can search on.
@@ -102,6 +105,7 @@ class CustomSearchModel( models.Model ):
         return self.name
 
 
+@python_2_unicode_compatible
 class CustomSearchField( models.Model ):
     """
     Define a field for a custom search model
@@ -135,6 +139,7 @@ class CustomSearchField( models.Model ):
         ordering = ['model__name', 'name']
 
 
+@python_2_unicode_compatible
 class CustomSearchLayout( models.Model ):
     """
     """
@@ -236,6 +241,7 @@ class CustomSearchLayoutField( models.Model ):
         ordering = ['position', 'id']
 
 
+@python_2_unicode_compatible
 class CustomSearch( models.Model ):
     """
     Model for defining a custom search on the contact model
