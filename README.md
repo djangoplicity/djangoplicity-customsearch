@@ -27,7 +27,7 @@ git+https://@github.com/djangoplicity/djangoplicity-customsearch.git@develop
 # Asynchronous Task Queue
 celery==4.4.7
 ```
-The celery package is required because it is required for some asynchronous tasks.
+Celery is also required for some asynchronous tasks to work.
 
 Now include the package in your `INSTALLED_APPS`:
 ```python
