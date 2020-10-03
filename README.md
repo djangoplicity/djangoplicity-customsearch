@@ -70,5 +70,3 @@ admin_site.register(django.contrib.auth.models.User, django.contrib.auth.admin.U
 admin_site.register(django.contrib.auth.models.Group, django.contrib.auth.admin.GroupAdmin)
 
 ```
-
-
