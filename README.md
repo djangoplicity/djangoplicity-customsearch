@@ -70,3 +70,54 @@ admin_site.register(django.contrib.auth.models.User, django.contrib.auth.admin.U
 admin_site.register(django.contrib.auth.models.Group, django.contrib.auth.admin.GroupAdmin)
 
 ```
+
+## Development
+
+This repository includes an example project for local development located in the test_project folder. You can find
+there the basic configuration to get a project working.
+ 
+### Cloning the repository
+
+In your terminal run the command:
+
+```` 
+git clone https://gitlab.com/djangoplicity/djangoplicity-customsearch.git
+````
+
+### Running the project
+
+All the configuration to start the project is present in the docker-compose files and Dockerfile,
+then at this point a single command is required to download all the dependencies and run the project:
+
+```` 
+docker-compose up
+````
+
+> The previous command reads the config from docker-compose.yml. 
+
+When the process finishes, the server will be available at *`localhost:8002`*
+
+To stop containers press `CTRL + C` in Windows or `⌘ + C` in MacOS
+
+If the dependencies change, you should recreate the docker images and start the containers again with this command:
+
+```` 
+docker-compose up --build
+````
+
+### Additional commands
+
+Inside the `Makefile` there are multiple command shortcuts, they can be run in UNIX systems like this:
+
+```
+make <command-name>
+```
+
+E.g.
+
+```
+make migrate
+```
+
+> In Windows you can just copy and paste the related command
+
