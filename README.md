@@ -8,6 +8,13 @@
 Djangoplicity Customsearch is a dependency of the [Djangoplicity](https://github.com/djangoplicity/djangoplicity) CMS
 created by the European Southern Observatory (ESO) for managing internal searches.
 
+* [Requirements](#requirements)
+* [Installation](#installation)
+* [Development](#development)
+    * [Cloning the repository](#cloning-the-repository)
+    * [Running the project](#running-the-project)
+* [License](#license)
+
 ## Installation
 Djangoplicity Customsearch actually supports Python 2.7 and Python 3+.
 
