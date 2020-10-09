@@ -116,7 +116,7 @@ make <command-name>
 E.g.
 
 ```
-make migrate
+make test
 ```
 
 > In Windows you can just copy and paste the related command
