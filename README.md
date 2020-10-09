@@ -121,3 +121,6 @@ make test
 
 > In Windows you can just copy and paste the related command
 
+## License
+
+This repository is released under the [GPL-2.0 License](LICENSE)
