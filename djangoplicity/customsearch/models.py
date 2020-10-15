@@ -99,7 +99,7 @@ class CustomSearchModel( models.Model ):
     Define which models you can search on.
     """
     name = models.CharField( max_length=255 )
-    model = models.ForeignKey( ContentType )
+    model = models.ForeignKey( ContentType, on_delete=models.CASCADE )
 
     def __str__( self ):
         return self.name
@@ -110,7 +110,7 @@ class CustomSearchField( models.Model ):
     """
     Define a field for a custom search model
     """
-    model = models.ForeignKey( CustomSearchModel )
+    model = models.ForeignKey( CustomSearchModel, on_delete=models.CASCADE )
     name = models.CharField( max_length=255 )
     field_name = models.SlugField()
     selector = models.SlugField( blank=True )
@@ -143,7 +143,7 @@ class CustomSearchField( models.Model ):
 class CustomSearchLayout( models.Model ):
     """
     """
-    model = models.ForeignKey( CustomSearchModel )
+    model = models.ForeignKey( CustomSearchModel, on_delete=models.CASCADE )
     name = models.CharField( max_length=255 )
     fields = models.ManyToManyField( CustomSearchField, through='CustomSearchLayoutField' )
 
@@ -226,8 +226,8 @@ class CustomSearchLayout( models.Model ):
 
 
 class CustomSearchLayoutField( models.Model ):
-    layout = models.ForeignKey( CustomSearchLayout )
-    field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_layout': True } )
+    layout = models.ForeignKey( CustomSearchLayout, on_delete=models.CASCADE )
+    field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_layout': True }, on_delete=models.CASCADE )
     position = models.PositiveIntegerField( null=True, blank=True )
     expand_rel = models.BooleanField( default=False )
 
@@ -247,9 +247,9 @@ class CustomSearch( models.Model ):
     Model for defining a custom search on the contact model
     """
     name = models.CharField( max_length=255 )
-    model = models.ForeignKey( CustomSearchModel )
-    group = models.ForeignKey( CustomSearchGroup, blank=True, null=True )
-    layout = models.ForeignKey( CustomSearchLayout )
+    model = models.ForeignKey( CustomSearchModel, on_delete=models.CASCADE )
+    group = models.ForeignKey( CustomSearchGroup, blank=True, null=True, on_delete=models.CASCADE )
+    layout = models.ForeignKey( CustomSearchLayout, on_delete=models.CASCADE )
 
     class Meta:
         verbose_name_plural = 'custom searches'
@@ -475,9 +475,9 @@ class CustomSearchCondition( models.Model ):
     boolean_lookups = ['__isnull', ]
     date_lookups = ['__gt', '__lte']
 
-    search = models.ForeignKey( CustomSearch )
+    search = models.ForeignKey( CustomSearch, on_delete=models.CASCADE )
     exclude = models.BooleanField( default=False )
-    field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search': True } )
+    field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search': True }, on_delete=models.CASCADE )
     match = models.CharField( max_length=30, choices=MATCH_TYPE )
     value = models.CharField( max_length=255, blank=True )
     and_together = models.BooleanField(default=False, help_text='"AND" conditions together instead of "OR"')
@@ -534,8 +534,8 @@ class CustomSearchOrdering( models.Model ):
     """
     Allow ordering of fields
     """
-    search = models.ForeignKey( CustomSearch )
-    field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search': True } )
+    search = models.ForeignKey( CustomSearch, on_delete=models.CASCADE )
+    field = models.ForeignKey( CustomSearchField, limit_choices_to={ 'enable_search': True }, on_delete=models.CASCADE )
     descending = models.BooleanField( default=False )
 
     def order_by_field( self ):
