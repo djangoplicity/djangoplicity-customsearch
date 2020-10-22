@@ -79,8 +79,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('position', models.PositiveIntegerField(null=True, blank=True)),
                 ('expand_rel', models.BooleanField(default=False)),
-                ('field', models.ForeignKey(to='customsearch.CustomSearchField')),
-                ('layout', models.ForeignKey(to='customsearch.CustomSearchLayout')),
+                ('field', models.ForeignKey(to='customsearch.CustomSearchField', on_delete=models.CASCADE)),
+                ('layout', models.ForeignKey(to='customsearch.CustomSearchLayout', on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ['position', 'id'],
@@ -92,7 +92,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=255)),
-                ('model', models.ForeignKey(to='contenttypes.ContentType')),
+                ('model', models.ForeignKey(to='contenttypes.ContentType', on_delete=models.CASCADE)),
             ],
             options={
             },
@@ -103,8 +103,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('descending', models.BooleanField(default=False)),
-                ('field', models.ForeignKey(to='customsearch.CustomSearchField')),
-                ('search', models.ForeignKey(to='customsearch.CustomSearch')),
+                ('field', models.ForeignKey(to='customsearch.CustomSearchField', on_delete=models.CASCADE)),
+                ('search', models.ForeignKey(to='customsearch.CustomSearch', on_delete=models.CASCADE)),
             ],
             options={
             },
@@ -119,43 +119,43 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='customsearchlayout',
             name='model',
-            field=models.ForeignKey(to='customsearch.CustomSearchModel'),
+            field=models.ForeignKey(to='customsearch.CustomSearchModel', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='customsearchfield',
             name='model',
-            field=models.ForeignKey(to='customsearch.CustomSearchModel'),
+            field=models.ForeignKey(to='customsearch.CustomSearchModel', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='customsearchcondition',
             name='field',
-            field=models.ForeignKey(to='customsearch.CustomSearchField'),
+            field=models.ForeignKey(to='customsearch.CustomSearchField', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='customsearchcondition',
             name='search',
-            field=models.ForeignKey(to='customsearch.CustomSearch'),
+            field=models.ForeignKey(to='customsearch.CustomSearch', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='customsearch',
             name='group',
-            field=models.ForeignKey(blank=True, to='customsearch.CustomSearchGroup', null=True),
+            field=models.ForeignKey(blank=True, to='customsearch.CustomSearchGroup', null=True, on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='customsearch',
             name='layout',
-            field=models.ForeignKey(to='customsearch.CustomSearchLayout'),
+            field=models.ForeignKey(to='customsearch.CustomSearchLayout', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='customsearch',
             name='model',
-            field=models.ForeignKey(to='customsearch.CustomSearchModel'),
+            field=models.ForeignKey(to='customsearch.CustomSearchModel', on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]
