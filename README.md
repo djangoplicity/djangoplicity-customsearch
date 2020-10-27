@@ -57,26 +57,7 @@ DJANGOPLICITY_ADMIN_JS = "djangoplicity/js/admin.js"
 SUBJECT_CATEGORY_CSS = "djangoplicity/css/widgets.css"
 ```
 
-Next, you have to register the models in your `admin.py` file.
-```python
-# Import all admin interfaces we need
-import django.contrib.sites.admin
-from djangoplicity.contrib.admin.discover import autoregister
-from djangoplicity.contrib.admin.sites import AdminSite
-import djangoplicity.customsearch.admin
-
-# Register each applications admin interfaces with
-# an admin site.
-admin_site = AdminSite(name="admin_site")
-
-autoregister(admin_site, django.contrib.auth.admin)
-autoregister(admin_site, django.contrib.sites.admin)
-
-autoregister(admin_site, djangoplicity.customsearch.admin)
-admin_site.register(django.contrib.auth.models.User, django.contrib.auth.admin.UserAdmin)
-admin_site.register(django.contrib.auth.models.Group, django.contrib.auth.admin.GroupAdmin)
-
-```
+You can find more information about the required code in the [test_project](test_project) folder.
 
 ## Development
 
