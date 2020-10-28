@@ -36,26 +36,10 @@ celery==4.4.7
 ```
 Celery is also required for some asynchronous tasks to work.
 
-Now include the package in your `INSTALLED_APPS`:
-```python
-INSTALLED_APPS = [
-    ...,
-    'djangoplicity.admincomments',
-    'djangoplicity.customsearch',
-]
-```
+Now include the package in your [INSTALLED_APPS](test_project/settings.py#L31).
 
-Djangoplicity requires some additional settings in order to work, so add this configuration to your `settings.py` 
-file (you don't have to include those files in your assets):
-```python
-# JAVASCRIPT CUSTOM CONFIG
-JQUERY_JS = "jquery/jquery-1.11.1.min.js"
-JQUERY_UI_JS = "jquery-ui-1.12.1/jquery-ui.min.js"
-JQUERY_UI_CSS = "jquery-ui-1.12.1/jquery-ui.min.css"
-DJANGOPLICITY_ADMIN_CSS = "djangoplicity/css/admin.css"
-DJANGOPLICITY_ADMIN_JS = "djangoplicity/js/admin.js"
-SUBJECT_CATEGORY_CSS = "djangoplicity/css/widgets.css"
-```
+Djangoplicity requires some additional settings in order to work, so add this configuration to your [settings.py](test_project/settings.py#L139)
+file (you don't have to include those files in your assets).
 
 You can find more information about the required code in the [test_project](test_project) folder.
 
