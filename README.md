@@ -38,7 +38,7 @@ Celery is also required for some asynchronous tasks to work.
 
 Now include the package in your [INSTALLED_APPS](test_project/settings.py#L31).
 
-Djangoplicity requires some additional settings in order to work, so add this configuration to your [settings.py](test_project/settings.py#L139)
+Djangoplicity requires some additional settings in order to work, so add [this](test_project/settings.py#L139) configuration to your settings
 file (you don't have to include those files in your assets).
 
 You can find more information about the required code in the [test_project](test_project) folder.
