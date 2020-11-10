@@ -16,7 +16,7 @@ created by the European Southern Observatory (ESO) for managing internal searche
 * [License](#license)
 
 ## Installation
-Djangoplicity Customsearch actually supports Python 2.7 and Python 3+.
+Djangoplicity Customsearch currently supports Python 2.7 and Python 3+.
 
 You must install Djangoplicity Customsearch using the Github repository, so add the following packages to your
 requirements depending on the Python version you are using.
