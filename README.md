@@ -53,7 +53,7 @@ there the basic configuration to get a project working.
 In your terminal run the command:
 
 ```` 
-git clone https://gitlab.com/djangoplicity/djangoplicity-customsearch.git
+git clone https://github.com/djangoplicity/djangoplicity-customsearch.git
 ````
 
 ### Running the project
