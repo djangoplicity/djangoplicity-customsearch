@@ -69,7 +69,7 @@ docker-compose up
 
 When the process finishes, the server will be available at *`localhost:8002`*
 
-To stop containers press `CTRL + C` or run `docker-compose down`
+To stop containers press `CTRL + C` or run `docker-compose stop`
 
 If the dependencies change, you should recreate the docker images and start the containers again with this command:
 
