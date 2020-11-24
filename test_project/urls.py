@@ -18,5 +18,5 @@ from django.conf.urls import url, include
 from test_project.admin import admin_site
 
 urlpatterns = [
-    url(r'^admin/', include(admin_site.urls)),
+    url(r'^admin/', admin_site.urls),
 ]
