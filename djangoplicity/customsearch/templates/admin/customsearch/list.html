@@ -43,7 +43,7 @@
 <p><strong>Total:</strong> {{object_count}}</p>
 {% endif %}
 
-<div id="content-main">
+<div id="content-main customsearch-admin-results">
     {% block object-tools %}
 
         <ul class="object-tools">
@@ -62,7 +62,7 @@
       {% block search %}
         <div id="toolbar"><form id="changelist-search" action="" method="get">
         <div><!-- DIV needed for valid HTML -->
-        <label for="searchbar"><img src="/static/app/admin/img/search.svg" alt="Search" /></label>
+        <label for="searchbar"><img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
         <input type="text" size="40" name="s" value="{{ searchval|escape }}" id="searchbar" />
         {% if o %}<input type="hidden" size="40" name="o" value="{{ o|escape }}" id="searchbar" />{% endif %}
         {% if ot %}<input type="hidden" size="40" name="ot" value="{{ ot|escape }}" id="searchbar" />{% endif %}
