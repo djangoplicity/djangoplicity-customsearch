@@ -9,4 +9,4 @@ git+https://@github.com/djangoplicity/djangoplicity.git@develop
 psycopg2-binary==2.7.7
 
 # Asynchronous Task Queue
-celery==4.3.0
+celery==5.2.2
