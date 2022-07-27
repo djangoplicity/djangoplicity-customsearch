@@ -48,7 +48,7 @@ from django.contrib.admin.utils import quote
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.aggregates import Max, Min
-from django.db.models.fields import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models.fields.related import ForeignObjectRel
 
 from datetime import datetime
