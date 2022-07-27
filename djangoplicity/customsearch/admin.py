@@ -36,7 +36,7 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render_to_response
+from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import slugify
 from django.utils.safestring import mark_safe
 from djangoplicity.admincomments.admin import AdminCommentInline, \
@@ -158,7 +158,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 
         export_search.delay(pk, request.user.email, s, o, ot)
 
-        return render_to_response('admin/customsearch/export.html', {'search': search, 'email': request.user.email})
+        return render('admin/customsearch/export.html', {'search': search, 'email': request.user.email})
 
     def labels_view( self, request, pk=None ):
         """
@@ -180,7 +180,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
             # No label, so display list of available labels
             labels = Label.objects.filter( enabled=True ).order_by( 'name' )
 
-            return render_to_response(
+            return render(
                 "admin/customsearch/labels.html",
                 {
                     'search': search,
@@ -247,7 +247,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
             } )
             i += 1
 
-        return render_to_response(
+        return render(
             "admin/customsearch/list.html",
             {
                 'results_header': results_header,
