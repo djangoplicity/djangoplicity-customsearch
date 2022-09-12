@@ -31,6 +31,7 @@
 
 from djangoplicity.customsearch.exporter import ExcelExporter
 from djangoplicity.customsearch.models import CustomSearch
+from django.conf import settings
 
 from celery.task import task
 from django.core.mail import EmailMessage
@@ -65,7 +66,7 @@ def export_search(search_id, email, searchval=None, ordering=None, ordering_dire
 
     # Send the export file as attachment
     email = EmailMessage('Custom Search export ready: "%s"' % search.name,
-                '', 'no-reply@eso.org', [email])
+                '', settings.DEFAULT_FROM_EMAIL, [email])
     email.attach_file(f.name)
     email.send()
 
