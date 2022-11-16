@@ -193,7 +193,7 @@ class CustomSearchLayout( models.Model ):
             return [ '"%s"' % tmp if tmp else "" ]
         else:
             result = getattr( obj, accessor )
-            if expand and field.selector.startswith('__'):
+            if expand and result and field.selector.startswith('__'):
                 result = getattr( result, field.selector.split('__')[1] )
             return [result]
 
