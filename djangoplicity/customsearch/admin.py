@@ -158,7 +158,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
 
         export_search.delay(pk, request.user.email, s, o, ot)
 
-        return render('admin/customsearch/export.html', {'search': search, 'email': request.user.email})
+        return render(request, 'admin/customsearch/export.html', {'search': search, 'email': request.user.email})
 
     def labels_view( self, request, pk=None ):
         """
@@ -181,6 +181,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
             labels = Label.objects.filter( enabled=True ).order_by( 'name' )
 
             return render(
+                request,
                 "admin/customsearch/labels.html",
                 {
                     'search': search,
@@ -248,6 +249,7 @@ class CustomSearchAdmin( AdminCommentMixin, admin.ModelAdmin ):
             i += 1
 
         return render(
+            request,
             "admin/customsearch/list.html",
             {
                 'results_header': results_header,
